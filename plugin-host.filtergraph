@@ -61,11 +61,11 @@
       </OUTPUTS>
     </LAYOUT>
   </FILTER>
-  <FILTER uid="8" x="0.1975" y="0.4637096774193548" useARA="0" uiLastX_Normal="433"
+  <FILTER uid="8" x="0.3175" y="0.4677419354838709" useARA="0" uiLastX_Normal="433"
           uiLastY_Normal="496" uiopen_Normal="0">
     <PLUGIN name="midi-time-machine" format="VST3" category="Fx" manufacturer="yourcompany"
             version="1.0.0" file="/home/maksut/.vst3/midi-time-machine.vst3/Contents/x86_64-linux/midi-time-machine.so"
-            uniqueId="fe9ae8ea" isInstrument="0" fileTime="19b0a20d6f8" infoUpdateTime="19b0a32d93a"
+            uniqueId="fe9ae8ea" isInstrument="0" fileTime="19b14965c48" infoUpdateTime="19b1499e996"
             numInputs="0" numOutputs="0" isShell="0" hasARAExtension="0"
             uid="acfa8084"/>
     <STATE>191.VMjLgXK....O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9XCLt3hKt3hKt3hKt3hYRUUSTEETIckVwTjQisVTTgkdEYjKAQjYPQSPWgUdMcjKAQjct3hdA4hKt3hKt3hKtnTUv.UQAslXuk0UXoWUFE0YQcEV77RRC8Vav8lak4Fc9vyKVMEUy.Ea0cVZtMEcgQWY9..</STATE>

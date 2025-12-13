@@ -36,8 +36,8 @@ double MTMAudioProcessor::getTailLengthSeconds() const
 
 int MTMAudioProcessor::getNumPrograms()
 {
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+    return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
+              // so this should be at least 1, even if you're not really implementing programs.
 }
 
 int MTMAudioProcessor::getCurrentProgram()
@@ -45,20 +45,20 @@ int MTMAudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void MTMAudioProcessor::setCurrentProgram (int index)
+void MTMAudioProcessor::setCurrentProgram(int index)
 {
 }
 
-const juce::String MTMAudioProcessor::getProgramName (int index)
+const juce::String MTMAudioProcessor::getProgramName(int index)
 {
     return {};
 }
 
-void MTMAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void MTMAudioProcessor::changeProgramName(int index, const juce::String &newName)
 {
 }
 
-void MTMAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void MTMAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
@@ -70,10 +70,10 @@ void MTMAudioProcessor::releaseResources()
     // spare memory, etc.
 }
 
-void MTMAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void MTMAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     // In case we have more outputs than inputs, this code clears any output
@@ -83,20 +83,32 @@ void MTMAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear(i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    double sampleRate = getSampleRate();
+
+    if (sampleRate == 0)
+        sampleRate = lastNonZeroSampleRate;
+    else
+        lastNonZeroSampleRate = sampleRate;
+
+    if (!midiMessages.isEmpty())
     {
-        auto* channelData = buffer.getWritePointer (channel);
+        double secondsPerSample = 1.0 / sampleRate;
 
-        // ..do something to the data...
+        for (const auto metadata : midiMessages)
+        {
+            auto message = metadata.getMessage();
+            message.setTimeStamp((sampleCount + metadata.samplePosition) * secondsPerSample);
+            queue.push(message);
+        }
+
+        // Let the message/editor thread know
+        sendChangeMessage();
     }
+    // else // what to do if sampleRate is zero?
+
+    sampleCount += buffer.getNumSamples();
 }
 
 bool MTMAudioProcessor::hasEditor() const
@@ -104,26 +116,38 @@ bool MTMAudioProcessor::hasEditor() const
     return true;
 }
 
-juce::AudioProcessorEditor* MTMAudioProcessor::createEditor()
+juce::AudioProcessorEditor *MTMAudioProcessor::createEditor()
 {
-    return new MTMAudioProcessorEditor (*this);
+    auto editor = new MTMAudioProcessorEditor(*this);
+    addChangeListener(editor);
+
+    return editor;
 }
 
-void MTMAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void MTMAudioProcessor::getStateInformation(juce::MemoryBlock &destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void MTMAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void MTMAudioProcessor::setStateInformation(const void *data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
 
+std::vector<juce::MidiMessage> MTMAudioProcessor::popMidiQueue()
+{
+    std::vector<juce::MidiMessage> messages;
+
+    queue.pop(std::back_inserter(messages));
+
+    return messages;
+}
+
 // This creates new instances of the plugin..
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
     return new MTMAudioProcessor();
 }

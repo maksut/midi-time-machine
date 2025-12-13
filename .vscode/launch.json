@@ -15,6 +15,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build midi-time-machine",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
