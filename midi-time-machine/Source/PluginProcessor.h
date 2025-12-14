@@ -7,15 +7,17 @@ class MidiQueue
 public:
     void push(const juce::MidiMessage &message)
     {
-        fifo.write(1).forEach([&](int dest)
-                              { messages[(size_t)dest] = message; });
+        fifo.write(1)
+            .forEach([&](int dest)
+                     { messages[(size_t)dest] = message; });
     }
 
     template <typename OutputIt>
     void pop(OutputIt out)
     {
-        fifo.read(fifo.getNumReady()).forEach([&](int source)
-                                              { *out++ = messages[(size_t)source]; });
+        fifo.read(fifo.getNumReady())
+            .forEach([&](int source)
+                     { *out++ = messages[(size_t)source]; });
     }
 
 private:
@@ -24,7 +26,7 @@ private:
     std::vector<juce::MidiMessage> messages = std::vector<juce::MidiMessage>(queueSize);
 };
 
-class MTMAudioProcessor : public juce::AudioProcessor, juce::ChangeBroadcaster
+class MTMAudioProcessor : public juce::AudioProcessor, public juce::ChangeBroadcaster
 {
 public:
     MTMAudioProcessor();

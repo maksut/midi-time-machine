@@ -87,26 +87,35 @@ void MTMAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::Mid
 
     double sampleRate = getSampleRate();
 
-    if (sampleRate == 0)
-        sampleRate = lastNonZeroSampleRate;
-    else
-        lastNonZeroSampleRate = sampleRate;
-
-    if (!midiMessages.isEmpty())
+    if (sampleRate != 0 && !midiMessages.isEmpty())
     {
-        double secondsPerSample = 1.0 / sampleRate;
+        //
+        // Midi messages from MidiBuffer has a timestamp indicating sample position.
+        // Not an actual timstamp, not "ticks per quarter".
+        // So here we calculate absolute time for them, in milliseconds.
+        // It may be possible to capture them with "ticks per quarter" instead,
+        // as they are provided from the host with the hosts BPM.
+        // However tempo is not always available and can change.
+        // It is simpler to capture absolute times. Then later they can be converted to TPQ if needed.
+        //
+
+        double millisPerSample = 1000.0 / sampleRate;
 
         for (const auto metadata : midiMessages)
         {
             auto message = metadata.getMessage();
-            message.setTimeStamp((sampleCount + metadata.samplePosition) * secondsPerSample);
+            auto originalTimestamp = message.getTimeStamp();
+
+            message.setTimeStamp((sampleCount + metadata.samplePosition) * millisPerSample);
             queue.push(message);
+
+            // Not sure this is needed. It is an attempt to keep midi through intact.
+            message.setTimeStamp(originalTimestamp);
         }
 
         // Let the message/editor thread know
         sendChangeMessage();
     }
-    // else // what to do if sampleRate is zero?
 
     sampleCount += buffer.getNumSamples();
 }
@@ -118,10 +127,7 @@ bool MTMAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor *MTMAudioProcessor::createEditor()
 {
-    auto editor = new MTMAudioProcessorEditor(*this);
-    addChangeListener(editor);
-
-    return editor;
+    return new MTMAudioProcessorEditor(*this);
 }
 
 void MTMAudioProcessor::getStateInformation(juce::MemoryBlock &destData)
