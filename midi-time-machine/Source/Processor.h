@@ -2,6 +2,8 @@
 
 #include <JuceHeader.h>
 
+class Store;
+
 class MidiQueue
 {
 public:
@@ -26,11 +28,11 @@ private:
     std::vector<juce::MidiMessage> messages = std::vector<juce::MidiMessage>(queueSize);
 };
 
-class MTMAudioProcessor : public juce::AudioProcessor, public juce::ChangeBroadcaster
+class Processor : public juce::AudioProcessor, public juce::ChangeBroadcaster
 {
 public:
-    MTMAudioProcessor();
-    ~MTMAudioProcessor() override;
+    Processor();
+    ~Processor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -58,9 +60,10 @@ public:
     std::vector<juce::MidiMessage> popMidiQueue();
 
 private:
-    juce::MidiMessageSequence recordedMidiMessages;
     MidiQueue queue;
+    Store *store;
+    juce::MidiMessageSequence recordedMidiMessages;
     juce::int64 sampleCount = 0;
     juce::int64 lastNonZeroSampleRate = 44100;
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MTMAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
 };

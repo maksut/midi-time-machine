@@ -1,76 +1,79 @@
-#include "PluginProcessor.h"
-#include "PluginEditor.h"
+#include "Processor.h"
+#include "Editor.h"
+#include "Store.h"
 
-MTMAudioProcessor::MTMAudioProcessor()
+Processor::Processor()
 {
+    store = new Store(*this);
 }
 
-MTMAudioProcessor::~MTMAudioProcessor()
+Processor::~Processor()
 {
+    delete store;
 }
 
-const juce::String MTMAudioProcessor::getName() const
+const juce::String Processor::getName() const
 {
     return "MIDI Time Machine";
 }
 
-bool MTMAudioProcessor::acceptsMidi() const
+bool Processor::acceptsMidi() const
 {
     return true;
 }
 
-bool MTMAudioProcessor::producesMidi() const
+bool Processor::producesMidi() const
 {
     return true;
 }
 
-bool MTMAudioProcessor::isMidiEffect() const
+bool Processor::isMidiEffect() const
 {
     return true;
 }
 
-double MTMAudioProcessor::getTailLengthSeconds() const
+double Processor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int MTMAudioProcessor::getNumPrograms()
+int Processor::getNumPrograms()
 {
     return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
               // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int MTMAudioProcessor::getCurrentProgram()
+int Processor::getCurrentProgram()
 {
     return 0;
 }
 
-void MTMAudioProcessor::setCurrentProgram(int index)
+void Processor::setCurrentProgram(int index)
 {
 }
 
-const juce::String MTMAudioProcessor::getProgramName(int index)
+const juce::String Processor::getProgramName(int index)
 {
     return {};
 }
 
-void MTMAudioProcessor::changeProgramName(int index, const juce::String &newName)
+void Processor::changeProgramName(int index, const juce::String &newName)
 {
 }
 
-void MTMAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 }
 
-void MTMAudioProcessor::releaseResources()
+void Processor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
-void MTMAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
+void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels = getTotalNumInputChannels();
@@ -120,30 +123,30 @@ void MTMAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::Mid
     sampleCount += buffer.getNumSamples();
 }
 
-bool MTMAudioProcessor::hasEditor() const
+bool Processor::hasEditor() const
 {
     return true;
 }
 
-juce::AudioProcessorEditor *MTMAudioProcessor::createEditor()
+juce::AudioProcessorEditor *Processor::createEditor()
 {
-    return new MTMAudioProcessorEditor(*this);
+    return new Editor(*this, *store);
 }
 
-void MTMAudioProcessor::getStateInformation(juce::MemoryBlock &destData)
+void Processor::getStateInformation(juce::MemoryBlock &destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void MTMAudioProcessor::setStateInformation(const void *data, int sizeInBytes)
+void Processor::setStateInformation(const void *data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
 
-std::vector<juce::MidiMessage> MTMAudioProcessor::popMidiQueue()
+std::vector<juce::MidiMessage> Processor::popMidiQueue()
 {
     std::vector<juce::MidiMessage> messages;
 
@@ -155,5 +158,5 @@ std::vector<juce::MidiMessage> MTMAudioProcessor::popMidiQueue()
 // This creates new instances of the plugin..
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
-    return new MTMAudioProcessor();
+    return new Processor();
 }

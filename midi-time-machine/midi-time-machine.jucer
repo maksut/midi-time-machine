@@ -4,15 +4,12 @@
               useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1"
               pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="BzG0Sb" name="midi-time-machine">
-    <GROUP id="{AF8EE6A1-329A-BB91-2BC7-4142DF71606B}" name="Source">
-      <FILE id="bfJqII" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
-      <FILE id="JOhpJt" name="PluginProcessor.h" compile="0" resource="0"
-            file="Source/PluginProcessor.h"/>
-      <FILE id="WiFnHy" name="PluginEditor.cpp" compile="1" resource="0"
-            file="Source/PluginEditor.cpp"/>
-      <FILE id="HBLnit" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
-    </GROUP>
+    <FILE id="vPEZQB" name="Editor.cpp" compile="1" resource="0" file="Source/Editor.cpp"/>
+    <FILE id="L1wUsh" name="Editor.h" compile="0" resource="0" file="Source/Editor.h"/>
+    <FILE id="piYcwK" name="Processor.cpp" compile="1" resource="0" file="Source/Processor.cpp"/>
+    <FILE id="FrfjVL" name="Processor.h" compile="0" resource="0" file="Source/Processor.h"/>
+    <FILE id="XxlzkA" name="Store.cpp" compile="1" resource="0" file="Source/Store.cpp"/>
+    <FILE id="OIoMuF" name="Store.h" compile="0" resource="0" file="Source/Store.h"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
