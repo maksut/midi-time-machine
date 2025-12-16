@@ -63,14 +63,23 @@ void Processor::changeProgramName(int index, const juce::String &newName)
 
 void Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    flushAndReset();
 }
 
 void Processor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    flushAndReset();
+}
+
+void Processor::reset()
+{
+    flushAndReset();
+}
+
+void Processor::flushAndReset()
+{
+    store->prepareAndSaveLastMidi();
+    sampleCount = 0;
 }
 
 void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
@@ -92,15 +101,13 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
 
     if (sampleRate != 0 && !midiMessages.isEmpty())
     {
-        //
-        // Midi messages from MidiBuffer has a timestamp indicating sample position.
-        // Not an actual timstamp, not "ticks per quarter".
+        // Midi messages from MidiBuffer have timestamps indicating sample position.
+        // Not an actual timstamp, not "ticks per quarter" either.
         // So here we calculate absolute time for them, in milliseconds.
         // It may be possible to capture them with "ticks per quarter" instead,
         // as they are provided from the host with the hosts BPM.
-        // However tempo is not always available and can change.
+        // However tempo is not always available and it can change.
         // It is simpler to capture absolute times. Then later they can be converted to TPQ if needed.
-        //
 
         double millisPerSample = 1000.0 / sampleRate;
 

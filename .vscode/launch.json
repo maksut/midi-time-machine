@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "midi-time-machine",
+            "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/midi-time-machine/Builds/LinuxMakefile/build/midi-time-machine",
@@ -30,7 +30,7 @@
             ]
         },
         {
-            "name": "Attach to midi-time-machine",
+            "name": "Attach",
             "type": "cppdbg",
             "request": "attach",
             "program": "${workspaceFolder}/midi-time-machine/Builds/LinuxMakefile/build/midi-time-machine",

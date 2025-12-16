@@ -22,6 +22,11 @@ public:
                      { *out++ = messages[(size_t)source]; });
     }
 
+    int size()
+    {
+        return fifo.getNumReady();
+    }
+
 private:
     static constexpr auto queueSize = 1 << 14;
     juce::AbstractFifo fifo{queueSize};
@@ -36,6 +41,7 @@ public:
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
+    void reset() override;
     void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
 
     juce::AudioProcessorEditor *createEditor() override;
@@ -60,6 +66,8 @@ public:
     std::vector<juce::MidiMessage> popMidiQueue();
 
 private:
+    void flushAndReset();
+
     MidiQueue queue;
     Store *store;
     juce::MidiMessageSequence recordedMidiMessages;
