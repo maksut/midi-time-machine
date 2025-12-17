@@ -21,6 +21,7 @@ private:
     Processor &processor;
     Store &store;
     juce::TextButton saveButton;
+    juce::TextButton playButton;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Editor)
 };

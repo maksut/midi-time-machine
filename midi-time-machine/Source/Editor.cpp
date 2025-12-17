@@ -7,6 +7,10 @@ Editor::Editor(Processor &processor, Store &midiStore)
     saveButton.addListener(this);
     addAndMakeVisible(saveButton);
 
+    playButton.setButtonText("Play");
+    playButton.addListener(this);
+    addAndMakeVisible(playButton);
+
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize(400, 300);
@@ -34,7 +38,9 @@ void Editor::paint(juce::Graphics &g)
 void Editor::resized()
 {
     auto windowBounds = getLocalBounds();
-    saveButton.setBounds(windowBounds.withSizeKeepingCentre(100, 30).translated(0, 50));
+
+    saveButton.setBounds(windowBounds.withSizeKeepingCentre(100, 30).translated(-50, 50));
+    playButton.setBounds(windowBounds.withSizeKeepingCentre(100, 30).translated(60, 50));
 }
 
 bool saveMidiFile(const juce::MidiFile &midiFile, const juce::File &destination)
@@ -57,6 +63,13 @@ void Editor::buttonClicked(juce::Button *button)
         juce::String msg = store.prepareAndSaveLastMidi() ? "Midi files are saved." : "Midi file is failed to save!";
 
         juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::NoIcon, "Midi file save", "Save button clicked");
+    }
+    else if (button == &playButton)
+    {
+        auto midiFile = store.getLastSavedMidiFile();
+
+        if (midiFile.has_value())
+            processor.startPlayback(*midiFile);
     }
 }
 

@@ -1,39 +1,13 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "MidiQueue.h"
 
 class Store;
+class Playback;
 
-class MidiQueue
-{
-public:
-    void push(const juce::MidiMessage &message)
-    {
-        fifo.write(1)
-            .forEach([&](int dest)
-                     { messages[(size_t)dest] = message; });
-    }
-
-    template <typename OutputIt>
-    void pop(OutputIt out)
-    {
-        fifo.read(fifo.getNumReady())
-            .forEach([&](int source)
-                     { *out++ = messages[(size_t)source]; });
-    }
-
-    int size()
-    {
-        return fifo.getNumReady();
-    }
-
-private:
-    static constexpr auto queueSize = 1 << 14;
-    juce::AbstractFifo fifo{queueSize};
-    std::vector<juce::MidiMessage> messages = std::vector<juce::MidiMessage>(queueSize);
-};
-
-class Processor : public juce::AudioProcessor, public juce::ChangeBroadcaster
+class Processor : public juce::AudioProcessor,
+                  public juce::ChangeBroadcaster
 {
 public:
     Processor();
@@ -65,13 +39,23 @@ public:
 
     std::vector<juce::MidiMessage> popMidiQueue();
 
+    void startPlayback(const juce::MidiFile &sequence);
+    void stopPlayback();
+
 private:
     void flushAndReset();
+
+    juce::AudioParameterFloat *testParam;
 
     MidiQueue queue;
     Store *store;
     juce::MidiMessageSequence recordedMidiMessages;
     juce::int64 sampleCount = 0;
     juce::int64 lastNonZeroSampleRate = 44100;
+
+    juce::CriticalSection playbackLock;
+    Playback *playbackRequest;
+    Playback *currentlyPlaying;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
 };

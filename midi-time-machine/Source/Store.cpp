@@ -118,7 +118,12 @@ bool Store::saveSmpteMidiFile(int noOfNoteOns, int durationMs)
     smpteMidiFile.setSmpteTimeFormat(25, 40);
     smpteMidiFile.addTrack(midiSequence);
 
-    return saveMidiFile(smpteMidiFile, noOfNoteOns, durationMs, "_smpte");
+    bool fileSaved = saveMidiFile(smpteMidiFile, noOfNoteOns, durationMs, "_smpte");
+
+    if (fileSaved)
+        lastSavedSmpteFile = smpteMidiFile;
+
+    return fileSaved;
 }
 
 bool Store::prepareAndSaveLastMidi()
@@ -232,4 +237,9 @@ void Store::timerCallback()
         return;
 
     prepareAndSaveLastMidi();
+}
+
+Store::MaybeMidiFile Store::getLastSavedMidiFile()
+{
+    return lastSavedSmpteFile;
 }

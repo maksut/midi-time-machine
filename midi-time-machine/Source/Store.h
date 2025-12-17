@@ -13,6 +13,9 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
     bool prepareAndSaveLastMidi();
 
+    typedef std::optional<std::reference_wrapper<const juce::MidiFile>> MaybeMidiFile;
+    MaybeMidiFile getLastSavedMidiFile();
+
 private:
     void drainProcessorMidiQueue();
     bool saveTpqMidiFile(int noOfNoteOns, int durationMs);
@@ -28,6 +31,7 @@ private:
     Processor &processor;
     juce::MidiMessageSequence midiSequence;
     juce::int64 lastQueueDrainedTimeMs = std::numeric_limits<juce::int64>::max();
+    std::optional<juce::MidiFile> lastSavedSmpteFile = {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Store)
 };
