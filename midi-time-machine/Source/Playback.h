@@ -9,7 +9,7 @@ public:
      * Puts zero-or-more midi messages from the playback midi sequence to the midiMessages buffer.
      * This is called in the audio thread!
      */
-    void play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, double millisPerSample);
+    bool play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, double millisPerSample);
 
     /**
      * Called in audio thread

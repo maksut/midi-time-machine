@@ -155,12 +155,17 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
 
                 // Then swap the pointers
                 std::swap(currentlyPlaying, playbackRequest);
+
+                playbackInProgress = true;
             }
         }
 
         // If there is a current playback ready then play it
         if (currentlyPlaying->isReadyToPlay())
-            currentlyPlaying->play(midiMessages, numOfSamples, millisPerSample);
+        {
+            if (currentlyPlaying->play(midiMessages, numOfSamples, millisPerSample))
+                playbackInProgress = false;
+        }
     }
 
     // Finally update the sampleCount. Using it to keep track of time.
@@ -221,4 +226,9 @@ std::vector<juce::MidiMessage> Processor::popMidiQueue()
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
     return new Processor();
+}
+
+bool Processor::isPlaybackInProgress()
+{
+    return playbackInProgress.get();
 }

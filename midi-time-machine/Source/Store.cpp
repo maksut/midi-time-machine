@@ -3,7 +3,7 @@
 const int POLL_TIME_MILLIS = 1000;
 const int MIN_SILENCE_BETWEEN_FILES_MS = 4000;
 const int PREDELAY_MS = 1000;
-const juce::String ROOT_DATA_FOLDER = "~/tmp/midi/";
+const juce::String ROOT_DATA_FOLDER = "midi_time_machine";
 
 Store::Store(Processor &processor)
     : processor(processor)
@@ -44,7 +44,7 @@ bool Store::saveMidiFile(const juce::MidiFile &midiFile, int noOfNoteOns, int du
         << filenamePostfix
         << juce::String(".mid");
 
-    juce::File parentDir = juce::File(ROOT_DATA_FOLDER).getChildFile(yearAndMonth);
+    juce::File parentDir = getRootDataDir().getChildFile(yearAndMonth);
 
     if (!parentDir.exists())
     {
@@ -242,4 +242,14 @@ void Store::timerCallback()
 Store::MaybeMidiFile Store::getLastSavedMidiFile()
 {
     return lastSavedSmpteFile;
+}
+
+juce::File Store::getRootDataDir()
+{
+    auto rootDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory).getChildFile(ROOT_DATA_FOLDER);
+
+    if (!rootDir.exists())
+        rootDir.createDirectory();
+
+    return rootDir;
 }

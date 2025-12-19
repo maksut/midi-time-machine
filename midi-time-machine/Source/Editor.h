@@ -3,10 +3,10 @@
 #include <JuceHeader.h>
 #include "Processor.h"
 #include "Store.h"
+#include "Toolbar.h"
 
 class Editor : public juce::AudioProcessorEditor,
-               public juce::ChangeListener,
-               public juce::Button::Listener
+               public juce::ChangeListener
 {
 public:
     Editor(Processor &processor, Store &store);
@@ -15,13 +15,12 @@ public:
     void paint(juce::Graphics &) override;
     void resized() override;
     void changeListenerCallback(juce::ChangeBroadcaster *source);
-    void buttonClicked(juce::Button *button) override;
 
 private:
     Processor &processor;
     Store &store;
-    juce::TextButton saveButton;
-    juce::TextButton playButton;
+    juce::TextButton openDataFolderButton;
+    Toolbar toolbar;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Editor)
 };

@@ -41,6 +41,7 @@ public:
 
     void startPlayback(const juce::MidiFile &sequence);
     void stopPlayback();
+    bool isPlaybackInProgress();
 
 private:
     void flushAndReset();
@@ -56,6 +57,7 @@ private:
     juce::CriticalSection playbackLock;
     Playback *playbackRequest;
     Playback *currentlyPlaying;
+    juce::Atomic<bool> playbackInProgress = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
 };

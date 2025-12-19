@@ -16,6 +16,8 @@ public:
     typedef std::optional<std::reference_wrapper<const juce::MidiFile>> MaybeMidiFile;
     MaybeMidiFile getLastSavedMidiFile();
 
+    static juce::File getRootDataDir();
+
 private:
     void drainProcessorMidiQueue();
     bool saveTpqMidiFile(int noOfNoteOns, int durationMs);

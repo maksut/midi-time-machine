@@ -11,8 +11,11 @@
     <FILE id="KKoRCk" name="Playback.h" compile="0" resource="0" file="Source/Playback.h"/>
     <FILE id="piYcwK" name="Processor.cpp" compile="1" resource="0" file="Source/Processor.cpp"/>
     <FILE id="FrfjVL" name="Processor.h" compile="0" resource="0" file="Source/Processor.h"/>
+    <FILE id="ZqofhV" name="Resources.cpp" compile="1" resource="0" file="Source/Resources.cpp"/>
+    <FILE id="ILQaDE" name="Resources.h" compile="0" resource="0" file="Source/Resources.h"/>
     <FILE id="XxlzkA" name="Store.cpp" compile="1" resource="0" file="Source/Store.cpp"/>
     <FILE id="OIoMuF" name="Store.h" compile="0" resource="0" file="Source/Store.h"/>
+    <FILE id="nlLvnW" name="Toolbar.h" compile="0" resource="0" file="Source/Toolbar.h"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
