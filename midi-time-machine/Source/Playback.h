@@ -14,7 +14,7 @@ public:
     /**
      * Called in audio thread
      */
-    void stop();
+    void stop(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer);
 
     /**
      * Called in audio thread
@@ -28,14 +28,27 @@ public:
 
 private:
     bool playOneTrack(
-        const juce::MidiFile &sourceMidiFile,
         int trackIndex,
         juce::MidiBuffer &destination,
         int numOfSamplesInBuffer,
         double bufferTimeMs);
 
+    /**
+     * Called in audio thread
+     */
+    void reset();
+
+    void resetNoteOnsAndSustain();
+
+    static double getInitialSilenceMs(const juce::MidiFile &sourceMidiFile);
+
 private:
     juce::MidiFile midiFile;
     double playheadTime = -1;
+    double initialSilenceMs = 0;
     std::unique_ptr<int[]> nextMessageIndexes = nullptr;
+
+    // To keep track of the active notes/sounds
+    bool currentNoteOns[16][128] = {};
+    int currentSustain[16] = {};
 };

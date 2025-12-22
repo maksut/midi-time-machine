@@ -159,7 +159,7 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
             if (playbackRequest->isReadyToPlay()) // Is there a new playback request?
             {
                 // Mark the currentlyPlaying sequence as done
-                currentlyPlaying->stop();
+                currentlyPlaying->stop(midiMessages, numOfSamples);
 
                 // Then swap the pointers
                 std::swap(currentlyPlaying, playbackRequest);
