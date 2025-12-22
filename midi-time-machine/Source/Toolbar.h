@@ -2,13 +2,17 @@
 
 #include <JuceHeader.h>
 #include "Resources.h"
-#include "Store.h"
+#include "Processor.h"
 
-class Toolbar : public juce::Component, public juce::Button::Listener
+class Toolbar : public juce::Component,
+                public juce::Button::Listener,
+                public juce::ValueTree::Listener
 {
 public:
-    Toolbar(Processor &processor, Store &store) : processor(processor), store(store)
+    Toolbar(Processor &processor, Store &store) : processor(processor), state(processor.getState()), store(store)
     {
+        state.addListener(this);
+
         playButton.setTooltip("Play the last saved midi file");
         openButton.setTooltip("Open the directory of last saved midi file in system explorer");
         settingsButton.setTooltip("In which there is plugin settings");
@@ -29,8 +33,7 @@ public:
         openButton.setImages(open.get());
         settingsButton.setImages(settings.get());
 
-        playButton.setClickingTogglesState(true);
-        playButton.setEnabled(store.getLastSavedMidiFile().has_value());
+        playButton.setEnabled(state.isMidiFileAvailable());
         playButton.addListener(this);
         openButton.addListener(this);
         settingsButton.addListener(this);
@@ -38,6 +41,19 @@ public:
         addAndMakeVisible(playButton);
         addAndMakeVisible(openButton);
         addAndMakeVisible(settingsButton);
+    }
+
+    ~Toolbar() override
+    {
+        state.removeListener(this);
+    }
+
+    void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
+    {
+        if (state.isMidiFileAvailableChange(tree, property))
+            playButton.setEnabled(state.isMidiFileAvailable());
+        else if (state.isPlaybackInProgressChange(tree, property))
+            playButton.setToggleState(state.isPlaybackInProgress(), juce::dontSendNotification);
     }
 
     void resized() override
@@ -58,13 +74,20 @@ public:
         if (button == &playButton)
         {
             if (playButton.getToggleState())
-                std::cout << "Play is on" << std::endl;
+            {
+                processor.stopPlayback();
+            }
             else
-                std::cout << "Play is off" << std::endl;
+            {
+                auto midiFile = store.getLastSavedMidiFile();
+
+                if (midiFile.has_value())
+                    processor.startPlayback(*midiFile);
+            }
         }
         else if (button == &openButton)
         {
-            juce::URL(store.getRootDataDir()).launchInDefaultBrowser();
+            juce::URL(state.getRootDataDir()).launchInDefaultBrowser();
         }
     }
 
@@ -75,5 +98,6 @@ private:
     juce::DrawableButton settingsButton{"Settings", juce::DrawableButton::ImageOnButtonBackground};
 
     Processor &processor;
+    State &state;
     Store &store;
 };

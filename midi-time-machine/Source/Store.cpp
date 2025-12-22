@@ -1,15 +1,11 @@
 #include "Store.h"
 
 const int POLL_TIME_MILLIS = 1000;
-const int MIN_SILENCE_BETWEEN_FILES_MS = 4000;
-const int PREDELAY_MS = 1000;
-const juce::String ROOT_DATA_FOLDER = "midi_time_machine";
 
-Store::Store(Processor &processor)
-    : processor(processor)
+Store::Store(Processor &processor) : processor(processor), state(processor.getState())
 {
-    // Start listening the processor for changes
-    processor.addChangeListener(this);
+    // Start listening the state for changes
+    state.addListener(this);
 
     // Start the timer
     startTimer(POLL_TIME_MILLIS);
@@ -17,11 +13,15 @@ Store::Store(Processor &processor)
 
 Store::~Store()
 {
-    // And stop listening the processor
-    processor.removeChangeListener(this);
+    // And stop listening the state
+    state.removeListener(this);
 }
 
-bool Store::saveMidiFile(const juce::MidiFile &midiFile, int noOfNoteOns, int durationMs, const juce::String &filenamePostfix)
+bool Store::saveMidiFile(
+    const juce::File &rootDataDir,
+    const juce::MidiFile &midiFile,
+    int noOfNoteOns, int durationMs,
+    const juce::String &filenamePostfix)
 {
     juce::Time now = juce::Time::getCurrentTime();
 
@@ -44,7 +44,7 @@ bool Store::saveMidiFile(const juce::MidiFile &midiFile, int noOfNoteOns, int du
         << filenamePostfix
         << juce::String(".mid");
 
-    juce::File parentDir = getRootDataDir().getChildFile(yearAndMonth);
+    juce::File parentDir = rootDataDir.getChildFile(yearAndMonth);
 
     if (!parentDir.exists())
     {
@@ -101,7 +101,7 @@ bool Store::saveTpqMidiFile(int noOfNoteOns, int durationMs)
     tpqMidiFile.setTicksPerQuarterNote(ticksPerQuarterNote);
     tpqMidiFile.addTrack(tpqMidiSequence);
 
-    return saveMidiFile(tpqMidiFile, noOfNoteOns, durationMs, "");
+    return saveMidiFile(getRootDataDir(), tpqMidiFile, noOfNoteOns, durationMs, "");
 }
 
 /**
@@ -118,10 +118,13 @@ bool Store::saveSmpteMidiFile(int noOfNoteOns, int durationMs)
     smpteMidiFile.setSmpteTimeFormat(25, 40);
     smpteMidiFile.addTrack(midiSequence);
 
-    bool fileSaved = saveMidiFile(smpteMidiFile, noOfNoteOns, durationMs, "_smpte");
+    bool fileSaved = saveMidiFile(getRootDataDir(), smpteMidiFile, noOfNoteOns, durationMs, "_smpte");
 
     if (fileSaved)
+    {
         lastSavedSmpteFile = smpteMidiFile;
+        state.setMidiFileAvailable(true);
+    }
 
     return fileSaved;
 }
@@ -138,7 +141,7 @@ bool Store::prepareAndSaveLastMidi()
     midiSequence.updateMatchedPairs();
 
     // Timestamps are millisecond durations; since the Processor::processBlock started to run till the midi message arrived.
-    midiSequence.addTimeToMessages(PREDELAY_MS - midiSequence.getStartTime());
+    midiSequence.addTimeToMessages(state.getPredelayMs() - midiSequence.getStartTime());
 
     // Count note on messages. And calculate the duration.
     int noOfNoteOns = 0;
@@ -209,10 +212,13 @@ juce::String Store::getDataString(const juce::MidiMessage &m)
     return {};
 }
 
-void Store::changeListenerCallback(juce::ChangeBroadcaster *source)
+void Store::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property)
 {
-    if (source == &processor)
+    if (state.isMidiMessagesAvailableChange(tree, property) && state.isMidiMessagesAvailable())
+    {
+        state.setMidiMessagesAvailable(false);
         drainProcessorMidiQueue();
+    }
 }
 
 void Store::drainProcessorMidiQueue()
@@ -233,7 +239,7 @@ void Store::timerCallback()
     if (midiSequence.getNumEvents() == 0)
         return;
 
-    if ((juce::Time::currentTimeMillis() - lastQueueDrainedTimeMs) < MIN_SILENCE_BETWEEN_FILES_MS)
+    if ((juce::Time::currentTimeMillis() - lastQueueDrainedTimeMs) < state.getMinSilenceMs())
         return;
 
     prepareAndSaveLastMidi();
@@ -246,7 +252,7 @@ Store::MaybeMidiFile Store::getLastSavedMidiFile()
 
 juce::File Store::getRootDataDir()
 {
-    auto rootDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory).getChildFile(ROOT_DATA_FOLDER);
+    auto rootDir = juce::File(state.getRootDataDir());
 
     if (!rootDir.exists())
         rootDir.createDirectory();

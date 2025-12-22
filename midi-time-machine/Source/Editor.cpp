@@ -9,15 +9,10 @@ Editor::Editor(Processor &processor, Store &midiStore)
     // editor's size to whatever you need it to be.
     setSize(400, 300);
     setResizable(true, true);
-
-    // Start listening the processor for changes
-    processor.addChangeListener(this);
 }
 
 Editor::~Editor()
 {
-    // And stop listening the processor
-    processor.removeChangeListener(this);
 }
 
 void Editor::paint(juce::Graphics &g)
@@ -38,8 +33,4 @@ void Editor::resized()
     windowBounds.setHeight(oneFifth);
     windowBounds.setY(windowBounds.getHeight() - oneFifth);
     toolbar.setBounds(windowBounds);
-}
-
-void Editor::changeListenerCallback(juce::ChangeBroadcaster *source)
-{
 }

@@ -5,8 +5,7 @@
 #include "Store.h"
 #include "Toolbar.h"
 
-class Editor : public juce::AudioProcessorEditor,
-               public juce::ChangeListener
+class Editor : public juce::AudioProcessorEditor
 {
 public:
     Editor(Processor &processor, Store &store);

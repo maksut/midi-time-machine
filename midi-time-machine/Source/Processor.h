@@ -2,12 +2,12 @@
 
 #include <JuceHeader.h>
 #include "MidiQueue.h"
+#include "State.h"
 
 class Store;
 class Playback;
 
-class Processor : public juce::AudioProcessor,
-                  public juce::ChangeBroadcaster
+class Processor : public juce::AudioProcessor, public juce::ChangeBroadcaster, public juce::ChangeListener
 {
 public:
     Processor();
@@ -37,11 +37,14 @@ public:
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
 
+    void changeListenerCallback(juce::ChangeBroadcaster *source) override;
+
     std::vector<juce::MidiMessage> popMidiQueue();
 
     void startPlayback(const juce::MidiFile &sequence);
     void stopPlayback();
-    bool isPlaybackInProgress();
+
+    State &getState();
 
 private:
     void flushAndReset();
@@ -50,6 +53,7 @@ private:
 
     MidiQueue queue;
     Store *store;
+    State state;
     juce::MidiMessageSequence recordedMidiMessages;
     juce::int64 sampleCount = 0;
     juce::int64 lastNonZeroSampleRate = 44100;

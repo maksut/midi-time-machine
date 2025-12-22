@@ -16,10 +16,18 @@ Processor::Processor()
 
     playbackRequest = new Playback();
     currentlyPlaying = new Playback();
+
+    // Processor is listening itself!. The change events are triggered in the audio thread.
+    // But the listener callbacks are executed in the non-audio threads.
+    // Then the processor modifies related bit of the ValueTree in the state.
+    // So other listener can listen for specific changes.
+    addChangeListener(this);
 }
 
 Processor::~Processor()
 {
+    removeChangeListener(this);
+
     delete store;
     delete playbackRequest;
     delete currentlyPlaying;
@@ -157,6 +165,7 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
                 std::swap(currentlyPlaying, playbackRequest);
 
                 playbackInProgress = true;
+                sendChangeMessage();
             }
         }
 
@@ -164,7 +173,11 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
         if (currentlyPlaying->isReadyToPlay())
         {
             if (currentlyPlaying->play(midiMessages, numOfSamples, millisPerSample))
+            {
+                // The playback is stopped. All midi messages are played.
                 playbackInProgress = false;
+                sendChangeMessage();
+            }
         }
     }
 
@@ -183,7 +196,11 @@ void Processor::stopPlayback()
 {
     juce::ScopedLock lock(playbackLock);
 
-    playbackRequest->stop();
+    // Send a playback request with an empty file.
+    // So the processor will do its usual swapping of currentlyPlaying & playbackRequest.
+    // Slightly hacky but simplifies the state management of these requests.
+    juce::MidiFile emptyMidiFile;
+    playbackRequest->start(emptyMidiFile);
 }
 
 bool Processor::hasEditor() const
@@ -198,19 +215,28 @@ juce::AudioProcessorEditor *Processor::createEditor()
 
 void Processor::getStateInformation(juce::MemoryBlock &destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    if (auto xml = state.toXml())
+        copyXmlToBinary(*xml, destData);
+}
 
-    juce::MemoryOutputStream(destData, true).writeFloat(*testParam);
+void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
+{
+    if (source != this)
+        return;
+
+    state.setMidiMessagesAvailable(queue.size() > 0);
+    state.setPlaybackInProgress(playbackInProgress.get());
 }
 
 void Processor::setStateInformation(const void *data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    if (auto xmlState = getXmlFromBinary(data, sizeInBytes))
+        state.fromXml(xmlState);
+}
 
-    *testParam = juce::MemoryInputStream(data, static_cast<size_t>(sizeInBytes), false).readFloat();
+State &Processor::getState()
+{
+    return state;
 }
 
 std::vector<juce::MidiMessage> Processor::popMidiQueue()
@@ -226,9 +252,4 @@ std::vector<juce::MidiMessage> Processor::popMidiQueue()
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
     return new Processor();
-}
-
-bool Processor::isPlaybackInProgress()
-{
-    return playbackInProgress.get();
 }
