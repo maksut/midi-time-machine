@@ -13,6 +13,7 @@ public:
 
         // Set setting properties
         settings.setProperty(minSilenceId, 4000, nullptr);
+        settings.setProperty(minSilenceMultiplierId, 5, nullptr);
         settings.setProperty(predelayId, 1000, nullptr);
 
         juce::String defaultRootDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
@@ -51,6 +52,11 @@ public:
     int getMinSilenceMs()
     {
         return settings.getProperty(minSilenceId);
+    }
+
+    int getMinSilenceMultiplier()
+    {
+        return settings.getProperty(minSilenceMultiplierId);
     }
 
     juce::String getRootDataDir()
@@ -129,6 +135,7 @@ private:
 
     // Settings properties - user visible
     static inline const juce::Identifier minSilenceId{"minSilenceMs"};
+    static inline const juce::Identifier minSilenceMultiplierId{"minSilenceMultiplier"};
     static inline const juce::Identifier predelayId{"predelayMs"};
     static inline const juce::Identifier rootDataDirId{"rootDataDir"};
 

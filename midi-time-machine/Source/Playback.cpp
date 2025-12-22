@@ -51,19 +51,7 @@ bool Playback::playOneTrack(
             ++nextMessageIndex;
 
             // Keep track of current note ons and sustain
-            int noteNumber = 127 & message.getNoteNumber();
-            int channel = 15 && message.getChannel();
-
-            if (message.isNoteOn())
-                currentNoteOns[channel - 1][noteNumber] = true;
-            else if (message.isNoteOff())
-                currentNoteOns[channel - 1][noteNumber] = false;
-            else if (message.isSustainPedalOn())
-                currentSustain[channel - 1] = 127;
-            else if (message.isSustainPedalOff())
-                currentSustain[channel - 1] = 0;
-            else if (message.isControllerOfType(64))
-                currentSustain[channel - 1] = message.getControllerValue();
+            activeNotes.track(message);
         }
         else
         {
@@ -93,19 +81,6 @@ double Playback::getInitialSilenceMs(const juce::MidiFile &midiFile)
     return silenceMs;
 }
 
-void Playback::resetNoteOnsAndSustain()
-{
-    for (int channel = 1; channel <= 16; ++channel)
-    {
-        for (int noteNumber = 0; noteNumber < 127; ++noteNumber)
-        {
-            currentNoteOns[channel - 1][noteNumber] = false;
-        }
-
-        currentSustain[channel - 1] = 0;
-    }
-}
-
 void Playback::start(const juce::MidiFile &sourceMidiFile)
 {
     midiFile = juce::MidiFile(sourceMidiFile); // clones the midi file
@@ -116,21 +91,7 @@ void Playback::start(const juce::MidiFile &sourceMidiFile)
 
 void Playback::stop(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer)
 {
-    for (int channel = 1; channel < 17; ++channel)
-    {
-        for (int noteNumber = 0; noteNumber < 128; ++noteNumber)
-        {
-            // Send a note off event for the current hanging "note on".
-            // With highest velocity.
-            // And with last sampleNumber for the buffer window.
-            if (currentNoteOns[channel - 1][noteNumber])
-                midiMessages.addEvent(juce::MidiMessage::noteOff(channel, noteNumber, 1.0f), numOfSamplesInBuffer - 1);
-        }
-
-        // Similary stop the sustain if active
-        if (currentSustain[channel - 1] > 0)
-            midiMessages.addEvent(juce::MidiMessage::controllerEvent(channel, 64, 0.0f), numOfSamplesInBuffer - 1);
-    }
+    activeNotes.stopActiveNotes(midiMessages, numOfSamplesInBuffer);
 
     reset();
 }
@@ -144,7 +105,7 @@ void Playback::reset()
     playheadTime = -1;
 
     // Reset the note on and sustain state
-    resetNoteOnsAndSustain();
+    activeNotes.reset();
 }
 
 bool Playback::isReadyToPlay()

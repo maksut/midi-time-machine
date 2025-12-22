@@ -6,6 +6,8 @@
   <MAINGROUP id="BzG0Sb" name="midi-time-machine">
     <FILE id="vPEZQB" name="Editor.cpp" compile="1" resource="0" file="Source/Editor.cpp"/>
     <FILE id="L1wUsh" name="Editor.h" compile="0" resource="0" file="Source/Editor.h"/>
+    <FILE id="TIGmRL" name="MessageTracker.h" compile="0" resource="0"
+          file="Source/MessageTracker.h"/>
     <FILE id="dSiF0u" name="MidiQueue.h" compile="0" resource="0" file="Source/MidiQueue.h"/>
     <FILE id="SZd9FM" name="Playback.cpp" compile="1" resource="0" file="Source/Playback.cpp"/>
     <FILE id="KKoRCk" name="Playback.h" compile="0" resource="0" file="Source/Playback.h"/>
@@ -13,6 +15,7 @@
     <FILE id="FrfjVL" name="Processor.h" compile="0" resource="0" file="Source/Processor.h"/>
     <FILE id="ZqofhV" name="Resources.cpp" compile="1" resource="0" file="Source/Resources.cpp"/>
     <FILE id="ILQaDE" name="Resources.h" compile="0" resource="0" file="Source/Resources.h"/>
+    <FILE id="xj3HFB" name="State.h" compile="0" resource="0" file="Source/State.h"/>
     <FILE id="XxlzkA" name="Store.cpp" compile="1" resource="0" file="Source/Store.cpp"/>
     <FILE id="OIoMuF" name="Store.h" compile="0" resource="0" file="Source/Store.h"/>
     <FILE id="nlLvnW" name="Toolbar.h" compile="0" resource="0" file="Source/Toolbar.h"/>

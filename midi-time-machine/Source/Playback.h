@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "MessageTracker.h"
 
 class Playback
 {
@@ -38,8 +39,6 @@ private:
      */
     void reset();
 
-    void resetNoteOnsAndSustain();
-
     static double getInitialSilenceMs(const juce::MidiFile &sourceMidiFile);
 
 private:
@@ -47,8 +46,5 @@ private:
     double playheadTime = -1;
     double initialSilenceMs = 0;
     std::unique_ptr<int[]> nextMessageIndexes = nullptr;
-
-    // To keep track of the active notes/sounds
-    bool currentNoteOns[16][128] = {};
-    int currentSustain[16] = {};
+    MessageTracker activeNotes;
 };

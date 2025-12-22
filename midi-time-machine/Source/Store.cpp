@@ -143,21 +143,18 @@ bool Store::prepareAndSaveLastMidi()
     // Timestamps are millisecond durations; since the Processor::processBlock started to run till the midi message arrived.
     midiSequence.addTimeToMessages(state.getPredelayMs() - midiSequence.getStartTime());
 
-    // Count note on messages. And calculate the duration.
-    int noOfNoteOns = 0;
+    // Get number of note on messages. And calculate the duration.
+    int numNoteOns = messageTracker.getNumberOfTotalNoteOns();
     int durationMs = midiSequence.getEndTime() - midiSequence.getStartTime();
 
-    for (int i = 0; i < midiSequence.getNumEvents(); ++i)
-    {
-        if (midiSequence.getEventPointer(i)->message.isNoteOn())
-            ++noOfNoteOns;
-    }
-
     // Save two midi files; one with ticks per quarter note timestamps and another with SMPTE timestamps.
-    bool filesSaved = saveTpqMidiFile(noOfNoteOns, durationMs) && saveSmpteMidiFile(noOfNoteOns, durationMs);
+    bool filesSaved = saveTpqMidiFile(numNoteOns, durationMs) && saveSmpteMidiFile(numNoteOns, durationMs);
 
     if (filesSaved)
+    {
         midiSequence.clear();
+        messageTracker.reset();
+    }
 
     return filesSaved;
 }
@@ -231,7 +228,10 @@ void Store::drainProcessorMidiQueue()
     lastQueueDrainedTimeMs = juce::Time::currentTimeMillis();
 
     for (auto it = messages.begin(); it != messages.end(); ++it)
+    {
+        messageTracker.track(*it);
         midiSequence.addEvent(*it, 0);
+    }
 }
 
 void Store::timerCallback()
@@ -239,7 +239,12 @@ void Store::timerCallback()
     if (midiSequence.getNumEvents() == 0)
         return;
 
-    if ((juce::Time::currentTimeMillis() - lastQueueDrainedTimeMs) < state.getMinSilenceMs())
+    int minSilenceMs = state.getMinSilenceMs();
+
+    if (messageTracker.hasActiveNotes())
+        minSilenceMs *= state.getMinSilenceMultiplier();
+
+    if ((juce::Time::currentTimeMillis() - lastQueueDrainedTimeMs) < minSilenceMs)
         return;
 
     prepareAndSaveLastMidi();
