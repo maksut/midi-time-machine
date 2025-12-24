@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "Resources.h"
-#include "Store.h"
+#include "../Store.h"
 #include "Settings.h"
 
 class Content : public juce::Component,

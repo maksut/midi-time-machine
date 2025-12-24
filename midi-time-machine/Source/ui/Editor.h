@@ -1,8 +1,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Processor.h"
-#include "Store.h"
+#include "../Processor.h"
+#include "../Store.h"
 #include "Toolbar.h"
 #include "Content.h"
 

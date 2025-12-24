@@ -1,5 +1,5 @@
 #include "Processor.h"
-#include "Editor.h"
+#include "ui/Editor.h"
 #include "Store.h"
 #include "Playback.h"
 

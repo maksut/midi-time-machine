@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "Resources.h"
-#include "Processor.h"
+#include "../Processor.h"
 
 class Toolbar : public juce::Component,
                 public juce::Button::Listener,

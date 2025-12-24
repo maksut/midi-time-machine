@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "State.h"
+#include "../State.h"
 
 class RootDataDirInput : public juce::Component, public juce::Button::Listener
 {
