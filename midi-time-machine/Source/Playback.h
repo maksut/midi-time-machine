@@ -32,19 +32,20 @@ private:
         int trackIndex,
         juce::MidiBuffer &destination,
         int numOfSamplesInBuffer,
-        double bufferTimeMs);
+        double bufferTimeSeconds);
 
     /**
      * Called in audio thread
      */
     void reset();
 
-    static double getInitialSilenceMs(const juce::MidiFile &sourceMidiFile);
+    static double getTrackStart(const juce::MidiMessageSequence *track);
+    static double getInitialSilenceSeconds(const juce::MidiFile &sourceMidiFile);
 
 private:
     juce::MidiFile midiFile;
-    double playheadTime = -1;
-    double initialSilenceMs = 0;
+    double playheadTimeSeconds = -1;
+    double initialSilenceSeconds = 0;
     std::unique_ptr<int[]> nextMessageIndexes = nullptr;
     MessageTracker activeNotes;
 };

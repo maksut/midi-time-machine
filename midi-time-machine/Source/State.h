@@ -10,11 +10,14 @@ public:
         // Set state properties
         state.setProperty(midiFileAvailableId, false, nullptr);
         state.setProperty(midiMessagesAvailableId, false, nullptr);
+        state.setProperty(playbackInProgressId, false, nullptr);
+        state.setProperty(settingsOpenId, false, nullptr);
 
         // Set setting properties
         settings.setProperty(minSilenceId, 4000, nullptr);
         settings.setProperty(minSilenceMultiplierId, 5, nullptr);
         settings.setProperty(predelayId, 1000, nullptr);
+        settings.setProperty(midiTimeFormatId, "TPQ", nullptr); // "TPQ" or "SMPTE" // Ticks Per Quarter note or absolute time
 
         juce::String defaultRootDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
                                           .getChildFile("midi_time_machine")
@@ -65,6 +68,11 @@ public:
         return settings.getProperty(rootDataDirId);
     }
 
+    juce::String getMidiTimeFormat()
+    {
+        return settings.getProperty(midiTimeFormatId);
+    }
+
     bool isMidiFileAvailable()
     {
         return state.getProperty(midiFileAvailableId);
@@ -110,6 +118,26 @@ public:
         return this->state == tree && property == playbackInProgressId;
     }
 
+    bool isSettinsOpen()
+    {
+        return state.getProperty(settingsOpenId);
+    }
+
+    void setSettinsOpen(bool isSettingsOpenId)
+    {
+        state.setProperty(settingsOpenId, isSettingsOpenId, nullptr);
+    }
+
+    void toggleSettingsOpen()
+    {
+        setSettinsOpen(!isSettinsOpen());
+    }
+
+    bool isSettinsOpenChange(juce::ValueTree &tree, const juce::Identifier &property)
+    {
+        return this->state == tree && property == settingsOpenId;
+    }
+
     void addListener(juce::ValueTree::Listener *listener)
     {
         state.addListener(listener);
@@ -132,11 +160,13 @@ private:
     static inline const juce::Identifier midiFileAvailableId{"midiFileAvailable"};
     static inline const juce::Identifier midiMessagesAvailableId{"midiMessagesAvailable"};
     static inline const juce::Identifier playbackInProgressId{"playbackInProgress"};
+    static inline const juce::Identifier settingsOpenId{"settingsOpen"};
 
     // Settings properties - user visible
     static inline const juce::Identifier minSilenceId{"minSilenceMs"};
     static inline const juce::Identifier minSilenceMultiplierId{"minSilenceMultiplier"};
     static inline const juce::Identifier predelayId{"predelayMs"};
+    static inline const juce::Identifier midiTimeFormatId{"midiTimeFormatId"};
     static inline const juce::Identifier rootDataDirId{"rootDataDir"};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(State)

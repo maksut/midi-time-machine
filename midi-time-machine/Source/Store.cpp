@@ -18,9 +18,9 @@ Store::~Store()
 }
 
 bool Store::saveMidiFile(
-    const juce::File &rootDataDir,
     const juce::MidiFile &midiFile,
-    int noOfNoteOns, int durationMs,
+    int noOfNoteOns,
+    int durationMs,
     const juce::String &filenamePostfix)
 {
     juce::Time now = juce::Time::getCurrentTime();
@@ -30,21 +30,35 @@ bool Store::saveMidiFile(
         << juce::String(now.getYear()).paddedLeft('0', 4) << "-"
         << juce::String(now.getMonth() + 1).paddedLeft('0', 2); // Month is 0-based
 
-    juce::MemoryOutputStream filename;
-    filename
+    juce::String date;
+    date
         << yearAndMonth << "-"
-        << juce::String(now.getDayOfMonth()).paddedLeft('0', 2) << "T"
+        << juce::String(now.getDayOfMonth()).paddedLeft('0', 2);
+
+    juce::String time;
+    time
         << juce::String(now.getHours()).paddedLeft('0', 2) << ":"
         << juce::String(now.getMinutes()).paddedLeft('0', 2) << ":"
-        << juce::String(now.getSeconds()).paddedLeft('0', 2) << " "
+        << juce::String(now.getSeconds()).paddedLeft('0', 2);
 
-        << juce::String(now.getWeekdayName(false)) << " "
+    juce::String day(now.getWeekdayName(false));
+
+    juce::String notesAndSeconds;
+    notesAndSeconds
         << juce::String(noOfNoteOns) << " notes "
-        << juce::String(juce::roundToInt(durationMs / 1000)) << " seconds"
-        << filenamePostfix
-        << juce::String(".mid");
+        << juce::String(juce::roundToInt(durationMs / 1000)) << " seconds";
 
-    juce::File parentDir = rootDataDir.getChildFile(yearAndMonth);
+    juce::MemoryOutputStream filename;
+    filename
+        << date << "T" << time << " " << day << " " << notesAndSeconds << filenamePostfix << juce::String(".mid");
+
+    juce::MemoryOutputStream description;
+    description
+        << date << " " << day << "\n"
+        << time << "\n"
+        << notesAndSeconds;
+
+    juce::File parentDir = getRootDataDir().getChildFile(yearAndMonth);
 
     if (!parentDir.exists())
     {
@@ -66,7 +80,15 @@ bool Store::saveMidiFile(
         return false;
 
     // Finally write it
-    return midiFile.writeTo(stream);
+    if (!midiFile.writeTo(stream))
+        return false;
+
+    // File is saved
+    lastSavedFile = midiFile;
+    lastSavedFileDescription = description.toUTF8();
+    state.setMidiFileAvailable(true);
+
+    return true;
 }
 
 /**
@@ -101,7 +123,7 @@ bool Store::saveTpqMidiFile(int noOfNoteOns, int durationMs)
     tpqMidiFile.setTicksPerQuarterNote(ticksPerQuarterNote);
     tpqMidiFile.addTrack(tpqMidiSequence);
 
-    return saveMidiFile(getRootDataDir(), tpqMidiFile, noOfNoteOns, durationMs, "");
+    return saveMidiFile(tpqMidiFile, noOfNoteOns, durationMs, "");
 }
 
 /**
@@ -118,15 +140,7 @@ bool Store::saveSmpteMidiFile(int noOfNoteOns, int durationMs)
     smpteMidiFile.setSmpteTimeFormat(25, 40);
     smpteMidiFile.addTrack(midiSequence);
 
-    bool fileSaved = saveMidiFile(getRootDataDir(), smpteMidiFile, noOfNoteOns, durationMs, "_smpte");
-
-    if (fileSaved)
-    {
-        lastSavedSmpteFile = smpteMidiFile;
-        state.setMidiFileAvailable(true);
-    }
-
-    return fileSaved;
+    return saveMidiFile(smpteMidiFile, noOfNoteOns, durationMs, "_smpte");
 }
 
 bool Store::prepareAndSaveLastMidi()
@@ -147,8 +161,12 @@ bool Store::prepareAndSaveLastMidi()
     int numNoteOns = messageTracker.getNumberOfTotalNoteOns();
     int durationMs = midiSequence.getEndTime() - midiSequence.getStartTime();
 
-    // Save two midi files; one with ticks per quarter note timestamps and another with SMPTE timestamps.
-    bool filesSaved = saveTpqMidiFile(numNoteOns, durationMs) && saveSmpteMidiFile(numNoteOns, durationMs);
+    // Save the midi file
+    bool filesSaved = false;
+    if (state.getMidiTimeFormat() == "TPQ")
+        filesSaved = saveTpqMidiFile(numNoteOns, durationMs);
+    else
+        filesSaved = saveSmpteMidiFile(numNoteOns, durationMs);
 
     if (filesSaved)
     {
@@ -252,7 +270,12 @@ void Store::timerCallback()
 
 Store::MaybeMidiFile Store::getLastSavedMidiFile()
 {
-    return lastSavedSmpteFile;
+    return lastSavedFile;
+}
+
+juce::String Store::getLastSavedFileDescription()
+{
+    return lastSavedFileDescription;
 }
 
 juce::File Store::getRootDataDir()

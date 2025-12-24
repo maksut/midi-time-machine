@@ -16,6 +16,7 @@ public:
 
     typedef std::optional<std::reference_wrapper<const juce::MidiFile>> MaybeMidiFile;
     MaybeMidiFile getLastSavedMidiFile();
+    juce::String getLastSavedFileDescription();
 
 private:
     void drainProcessorMidiQueue();
@@ -23,10 +24,10 @@ private:
     bool saveSmpteMidiFile(int noOfNoteOns, int durationMs);
     juce::File getRootDataDir();
 
-    static bool saveMidiFile(
-        const juce::File &rootDataDir,
+    bool saveMidiFile(
         const juce::MidiFile &midiFile,
-        int noOfNoteOns, int durationMs,
+        int noOfNoteOns,
+        int durationMs,
         const juce::String &filenamePostfix);
 
     static juce::String getDataString(const juce::MidiMessage &m);
@@ -40,7 +41,8 @@ private:
     juce::MidiMessageSequence midiSequence;
     MessageTracker messageTracker;
     juce::int64 lastQueueDrainedTimeMs = std::numeric_limits<juce::int64>::max();
-    std::optional<juce::MidiFile> lastSavedSmpteFile = {};
+    std::optional<juce::MidiFile> lastSavedFile = {};
+    juce::String lastSavedFileDescription = {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Store)
 };

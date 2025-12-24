@@ -22,15 +22,7 @@ public:
             currentNoteOns[channel - 1][noteNumber] = false;
             --numActiveNoteOns;
         }
-        else if (message.isSustainPedalOn())
-        {
-            currentSustain[channel - 1] = 127;
-        }
-        else if (message.isSustainPedalOff())
-        {
-            currentSustain[channel - 1] = 0;
-        }
-        else if (message.isControllerOfType(64))
+        else if (message.isControllerOfType(64)) // is it a sustain event?
         {
             currentSustain[channel - 1] = message.getControllerValue();
         }

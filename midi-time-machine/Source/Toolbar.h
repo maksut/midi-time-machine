@@ -39,6 +39,7 @@ public:
         settingsButton.addListener(this);
 
         addAndMakeVisible(playButton);
+        addAndMakeVisible(midiFileDescription);
         addAndMakeVisible(openButton);
         addAndMakeVisible(settingsButton);
     }
@@ -51,20 +52,33 @@ public:
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
         if (state.isMidiFileAvailableChange(tree, property))
+        {
             playButton.setEnabled(state.isMidiFileAvailable());
+            midiFileDescription.setText(store.getLastSavedFileDescription(), juce::dontSendNotification);
+        }
         else if (state.isPlaybackInProgressChange(tree, property))
+        {
             playButton.setToggleState(state.isPlaybackInProgress(), juce::dontSendNotification);
+        }
     }
 
     void resized() override
     {
         juce::FlexBox fb;
+
         fb.flexWrap = juce::FlexBox::Wrap::wrap;
         fb.justifyContent = juce::FlexBox::JustifyContent::center;
-        fb.alignContent = juce::FlexBox::AlignContent::center;
+        fb.alignContent = juce::FlexBox::AlignContent::stretch;
+        fb.alignItems = juce::FlexBox::AlignItems::stretch;
 
-        for (auto *button : getChildren())
-            fb.items.add(juce::FlexItem(*button).withMargin(5).withMinWidth(50.0f).withMinHeight(50.0f));
+        auto stretchSelf = juce::FlexItem::AlignSelf::stretch;
+
+        fb.items = {
+            juce::FlexItem(playButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(midiFileDescription).withMargin(5).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(openButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(settingsButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
+        };
 
         fb.performLayout(getLocalBounds());
     }
@@ -81,13 +95,17 @@ public:
             {
                 auto midiFile = store.getLastSavedMidiFile();
 
-                if (midiFile.has_value())
+                if (midiFile)
                     processor.startPlayback(*midiFile);
             }
         }
         else if (button == &openButton)
         {
             juce::URL(state.getRootDataDir()).launchInDefaultBrowser();
+        }
+        else if (button == &settingsButton)
+        {
+            state.toggleSettingsOpen();
         }
     }
 
@@ -96,6 +114,7 @@ private:
     juce::DrawableButton playButton{"Play", juce::DrawableButton::ImageOnButtonBackground};
     juce::DrawableButton openButton{"Open", juce::DrawableButton::ImageOnButtonBackground};
     juce::DrawableButton settingsButton{"Settings", juce::DrawableButton::ImageOnButtonBackground};
+    juce::Label midiFileDescription{"MidiFileDescription", "Nothing captured yet\nPlay something"};
 
     Processor &processor;
     State &state;
