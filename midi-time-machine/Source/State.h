@@ -14,6 +14,12 @@ public:
         state.setProperty(settingsOpenId, false, nullptr);
 
         // Set setting properties
+        resetSettings();
+        state.addChild(settings, -1, nullptr);
+    }
+
+    void resetSettings()
+    {
         settings.setProperty(minSilenceId, 4000, nullptr);
         settings.setProperty(minSilenceMultiplierId, 5, nullptr);
         settings.setProperty(predelayId, 1000, nullptr);
@@ -24,7 +30,6 @@ public:
                                           .getFullPathName();
 
         settings.setProperty(rootDataDirId, defaultRootDir, nullptr);
-        state.addChild(settings, -1, nullptr);
     }
 
     std::unique_ptr<juce::XmlElement> toXml() const
@@ -40,6 +45,11 @@ public:
         {
             state.copyPropertiesAndChildrenFrom(newState, nullptr);
 
+            if (auto s = state.getChildWithName(settingsId); s.isValid())
+                settings = s;
+            else
+                state.addChild(settings, -1, nullptr);
+
             // But we reset some of the state props
             setMidiFileAvailable(false);
             setMidiMessagesAvailable(false);
@@ -52,14 +62,29 @@ public:
         return settings.getProperty(predelayId);
     }
 
+    void setPredelayMs(int preDelayMs)
+    {
+        settings.setProperty(predelayId, preDelayMs, nullptr);
+    }
+
     int getMinSilenceMs()
     {
         return settings.getProperty(minSilenceId);
     }
 
+    void setMinSilenceMs(int minSilenceMs)
+    {
+        settings.setProperty(minSilenceId, minSilenceMs, nullptr);
+    }
+
     int getMinSilenceMultiplier()
     {
         return settings.getProperty(minSilenceMultiplierId);
+    }
+
+    void setMinSilenceMultiplier(int minSilenceMultiplier)
+    {
+        settings.setProperty(minSilenceMultiplierId, minSilenceMultiplier, nullptr);
     }
 
     juce::String getRootDataDir()
@@ -68,9 +93,19 @@ public:
         return settings.getProperty(rootDataDirId);
     }
 
+    void setRootDataDir(const juce::String &rootDataDir)
+    {
+        settings.setProperty(rootDataDirId, rootDataDir, nullptr);
+    }
+
     juce::String getMidiTimeFormat()
     {
         return settings.getProperty(midiTimeFormatId);
+    }
+
+    void setMidiTimeFormat(const juce::String &midiTimeFormat)
+    {
+        settings.setProperty(midiTimeFormatId, midiTimeFormat, nullptr);
     }
 
     bool isMidiFileAvailable()
