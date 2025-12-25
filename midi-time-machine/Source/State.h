@@ -8,10 +8,13 @@ public:
     State()
     {
         // Set state properties
-        state.setProperty(midiFileAvailableId, false, nullptr);
+        state.setProperty(midiFileChangeId, false, nullptr);
         state.setProperty(midiMessagesAvailableId, false, nullptr);
         state.setProperty(playbackInProgressId, false, nullptr);
         state.setProperty(settingsOpenId, false, nullptr);
+
+        auto homeDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory).getFullPathName();
+        state.setProperty(lastExportDirId, homeDir, nullptr);
 
         // Set setting properties
         resetSettings();
@@ -51,7 +54,6 @@ public:
                 state.addChild(settings, -1, nullptr);
 
             // But we reset some of the state props
-            setMidiFileAvailable(false);
             setMidiMessagesAvailable(false);
             setPlaybackInProgress(false);
         }
@@ -108,19 +110,14 @@ public:
         settings.setProperty(midiTimeFormatId, midiTimeFormat, nullptr);
     }
 
-    bool isMidiFileAvailable()
+    void toggleIsMidiFileChange()
     {
-        return state.getProperty(midiFileAvailableId);
+        state.setProperty(midiFileChangeId, !state.getProperty(midiFileChangeId), nullptr);
     }
 
-    void setMidiFileAvailable(bool isMidiFileAvailable)
+    bool isMidiFileChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        state.setProperty(midiFileAvailableId, isMidiFileAvailable, nullptr);
-    }
-
-    bool isMidiFileAvailableChange(juce::ValueTree &tree, const juce::Identifier &property)
-    {
-        return this->state == tree && property == midiFileAvailableId;
+        return state == tree && property == midiFileChangeId;
     }
 
     bool isMidiMessagesAvailable()
@@ -135,7 +132,7 @@ public:
 
     bool isMidiMessagesAvailableChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return this->state == tree && property == midiMessagesAvailableId;
+        return state == tree && property == midiMessagesAvailableId;
     }
 
     bool isPlaybackInProgress()
@@ -150,7 +147,7 @@ public:
 
     bool isPlaybackInProgressChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return this->state == tree && property == playbackInProgressId;
+        return state == tree && property == playbackInProgressId;
     }
 
     bool isSettinsOpen()
@@ -170,7 +167,17 @@ public:
 
     bool isSettinsOpenChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return this->state == tree && property == settingsOpenId;
+        return state == tree && property == settingsOpenId;
+    }
+
+    juce::String getLastExportDir()
+    {
+        return state.getProperty(lastExportDirId);
+    }
+
+    void setLastExportDir(const juce::String &lastExportDir)
+    {
+        state.setProperty(lastExportDirId, lastExportDir, nullptr);
     }
 
     void addListener(juce::ValueTree::Listener *listener)
@@ -192,10 +199,11 @@ private:
     static inline const juce::Identifier settingsId{"settings"};
 
     // State properties
-    static inline const juce::Identifier midiFileAvailableId{"midiFileAvailable"};
+    static inline const juce::Identifier midiFileChangeId{"midiFileChangeId"};
     static inline const juce::Identifier midiMessagesAvailableId{"midiMessagesAvailable"};
     static inline const juce::Identifier playbackInProgressId{"playbackInProgress"};
     static inline const juce::Identifier settingsOpenId{"settingsOpen"};
+    static inline const juce::Identifier lastExportDirId{"lastExportDir"};
 
     // Settings properties - user visible
     static inline const juce::Identifier minSilenceId{"minSilenceMs"};

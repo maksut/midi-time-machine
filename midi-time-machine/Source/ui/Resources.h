@@ -9,7 +9,8 @@ enum class Icon
     Stop,
     Open,
     Folder,
-    Settings
+    Settings,
+    Export
 };
 
 namespace Resources

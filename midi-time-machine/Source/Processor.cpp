@@ -5,7 +5,8 @@
 
 Processor::Processor()
 {
-    store = new Store(*this);
+    state.reset(new State());
+    store.reset(new Store(*this));
 
     addParameter(testParam = new juce::AudioParameterFloat(
                      juce::ParameterID{"testParam", 1}, // parameterID
@@ -14,8 +15,8 @@ Processor::Processor()
                      1.0f,                              // maximum value
                      0.5f));                            // default value
 
-    playbackRequest = new Playback();
-    currentlyPlaying = new Playback();
+    playbackRequest.reset(new Playback());
+    currentlyPlaying.reset(new Playback());
 
     // Processor is listening itself!. The change events are triggered in the audio thread.
     // But the listener callbacks are executed in the non-audio threads.
@@ -27,10 +28,6 @@ Processor::Processor()
 Processor::~Processor()
 {
     removeChangeListener(this);
-
-    delete store;
-    delete playbackRequest;
-    delete currentlyPlaying;
 }
 
 const juce::String Processor::getName() const
@@ -215,7 +212,7 @@ juce::AudioProcessorEditor *Processor::createEditor()
 
 void Processor::getStateInformation(juce::MemoryBlock &destData)
 {
-    if (auto xml = state.toXml())
+    if (auto xml = state->toXml())
         copyXmlToBinary(*xml, destData);
 }
 
@@ -224,19 +221,19 @@ void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
     if (source != this)
         return;
 
-    state.setMidiMessagesAvailable(queue.size() > 0);
-    state.setPlaybackInProgress(playbackInProgress.get());
+    state->setMidiMessagesAvailable(queue.size() > 0);
+    state->setPlaybackInProgress(playbackInProgress.get());
 }
 
 void Processor::setStateInformation(const void *data, int sizeInBytes)
 {
     if (auto xmlState = getXmlFromBinary(data, sizeInBytes))
-        state.fromXml(xmlState);
+        state->fromXml(xmlState);
 }
 
 State &Processor::getState()
 {
-    return state;
+    return *state;
 }
 
 std::vector<juce::MidiMessage> Processor::popMidiQueue()

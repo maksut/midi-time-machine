@@ -2,8 +2,8 @@
 
 #include <JuceHeader.h>
 #include "MidiQueue.h"
-#include "State.h"
 
+class State;
 class Store;
 class Playback;
 
@@ -52,15 +52,15 @@ private:
     juce::AudioParameterFloat *testParam;
 
     MidiQueue queue;
-    Store *store;
-    State state;
+    std::unique_ptr<State> state;
+    std::unique_ptr<Store> store;
     juce::MidiMessageSequence recordedMidiMessages;
     juce::int64 sampleCount = 0;
     juce::int64 lastNonZeroSampleRate = 44100;
 
     juce::CriticalSection playbackLock;
-    Playback *playbackRequest;
-    Playback *currentlyPlaying;
+    std::unique_ptr<Playback> playbackRequest;
+    std::unique_ptr<Playback> currentlyPlaying;
     juce::Atomic<bool> playbackInProgress = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)

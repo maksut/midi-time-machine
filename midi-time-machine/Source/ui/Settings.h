@@ -36,9 +36,9 @@ public:
         if (button == &selectDirButton)
         {
             bool useNativeVersion = true;
-            fc.reset(new juce::FileChooser("Choose a directory to store MIDI files", state.getRootDataDir(), "*", useNativeVersion));
+            fileChooser.reset(new juce::FileChooser("Choose a directory to store MIDI files", state.getRootDataDir(), "*", useNativeVersion));
 
-            fc->launchAsync(
+            fileChooser->launchAsync(
                 juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories,
                 [this](const juce::FileChooser &chooser)
                 {
@@ -58,12 +58,6 @@ public:
     }
 
 private:
-    State &state;
-    std::unique_ptr<juce::FileChooser> fc;
-    juce::ScopedMessageBox messageBox;
-    juce::DrawableButton selectDirButton{"Select", juce::DrawableButton::ImageOnButtonBackground};
-    juce::TextEditor rootDataDir{"RootDataDir"};
-
     void directorySelectedCallback(const juce::FileChooser &chooser)
     {
         auto result = chooser.getURLResult();
@@ -100,6 +94,13 @@ private:
                 nullptr);
         }
     }
+
+private:
+    State &state;
+    std::unique_ptr<juce::FileChooser> fileChooser;
+    juce::ScopedMessageBox messageBox;
+    juce::DrawableButton selectDirButton{"Select", juce::DrawableButton::ImageOnButtonBackground};
+    juce::TextEditor rootDataDir{"RootDataDir"};
 };
 
 class Settings : public juce::Component, public juce::Button::Listener

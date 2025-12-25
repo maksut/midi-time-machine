@@ -1,8 +1,10 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Processor.h"
 #include "MessageTracker.h"
+
+class Processor;
+class State;
 
 class Store : public juce::ValueTree::Listener, juce::Timer
 {
@@ -17,6 +19,7 @@ public:
     typedef std::optional<std::reference_wrapper<const juce::MidiFile>> MaybeMidiFile;
     MaybeMidiFile getLastSavedMidiFile();
     juce::String getLastSavedFileDescription();
+    juce::String getLastSavedFilePath();
 
 private:
     void drainProcessorMidiQueue();
@@ -41,6 +44,7 @@ private:
     juce::MidiMessageSequence midiSequence;
     MessageTracker messageTracker;
     juce::int64 lastQueueDrainedTimeMs = std::numeric_limits<juce::int64>::max();
+
     std::optional<juce::MidiFile> lastSavedFile = {};
     juce::String lastSavedFileDescription = {};
 

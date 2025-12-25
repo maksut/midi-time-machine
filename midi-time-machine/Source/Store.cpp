@@ -1,4 +1,6 @@
 #include "Store.h"
+#include "Processor.h"
+#include "State.h"
 
 const int POLL_TIME_MILLIS = 1000;
 
@@ -51,7 +53,7 @@ bool Store::saveMidiFile(
 
     juce::MemoryOutputStream filename;
     filename
-        << date << " " << day << " " 
+        << date << " " << day << " "
         << hours << "-" << mins << "-" << secs << " "
         << juce::String(noOfNoteOns) << " notes " << seconds << " seconds"
         << filenamePostfix << juce::String(".mid");
@@ -90,7 +92,9 @@ bool Store::saveMidiFile(
     // File is saved
     lastSavedFile = midiFile;
     lastSavedFileDescription = description.toUTF8();
-    state.setMidiFileAvailable(true);
+
+    // Trigger the midi file available change
+    state.toggleIsMidiFileChange();
 
     return true;
 }
