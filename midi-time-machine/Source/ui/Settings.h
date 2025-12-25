@@ -177,9 +177,9 @@ public:
     {
         if (button == &okButton)
         {
-            state.setMinSilenceMs(minSilence.getValue() * 1000.0f);
-            state.setMinSilenceMultiplier(minSilenceMultipler.getValue());
-            state.setPredelayMs(preDelay.getValue());
+            state.setMinSilenceMs(int(minSilence.getValue() * 1000.0f));
+            state.setMinSilenceMultiplier(int(minSilenceMultipler.getValue()));
+            state.setPredelayMs(int(preDelay.getValue()));
             state.setMidiTimeFormat(midiTimeFormat.getSelectedId() == 1 ? "TPQ" : "SMPTE");
             state.setRootDataDir(rootDataDir.getSelectedRootDataDir());
 

@@ -35,28 +35,32 @@ bool Store::saveMidiFile(
         << yearAndMonth << "-"
         << juce::String(now.getDayOfMonth()).paddedLeft('0', 2);
 
-    juce::String time;
-    time
-        << juce::String(now.getHours()).paddedLeft('0', 2) << ":"
-        << juce::String(now.getMinutes()).paddedLeft('0', 2) << ":"
-        << juce::String(now.getSeconds()).paddedLeft('0', 2);
-
     juce::String day(now.getWeekdayName(false));
 
-    juce::String notesAndSeconds;
-    notesAndSeconds
-        << juce::String(noOfNoteOns) << " notes "
-        << juce::String(juce::roundToInt(durationMs / 1000)) << " seconds";
+    juce::String hours(now.getHours());
+    hours.paddedLeft('0', 2);
+
+    juce::String mins(now.getMinutes());
+    mins.paddedLeft('0', 2);
+
+    juce::String secs(now.getSeconds());
+    secs.paddedLeft('0', 2);
+
+    juce::String seconds;
+    seconds << juce::String(juce::roundToInt(durationMs / 1000));
 
     juce::MemoryOutputStream filename;
     filename
-        << date << "T" << time << " " << day << " " << notesAndSeconds << filenamePostfix << juce::String(".mid");
+        << date << " " << day << " " 
+        << hours << "-" << mins << "-" << secs << " "
+        << juce::String(noOfNoteOns) << " notes " << seconds << " seconds"
+        << filenamePostfix << juce::String(".mid");
 
     juce::MemoryOutputStream description;
     description
         << date << " " << day << "\n"
-        << time << "\n"
-        << notesAndSeconds;
+        << hours << ":" << mins << ":" << secs << "\n"
+        << juce::String(noOfNoteOns) << " notes, " << seconds << " seconds";
 
     juce::File parentDir = getRootDataDir().getChildFile(yearAndMonth);
 
@@ -101,7 +105,7 @@ bool Store::saveMidiFile(
 bool Store::saveTpqMidiFile(int noOfNoteOns, int durationMs)
 {
     int beatsPerMinute = 120;
-    int microsPerQuarterNote = (60. / beatsPerMinute) * 1000000; // 500000 =>  0.5 seconds for 4/4 tempo and 120 bpm
+    int microsPerQuarterNote = int((60. / beatsPerMinute) * 1000000); // 500000 =>  0.5 seconds for 4/4 tempo and 120 bpm
     int ticksPerQuarterNote = 960;
     double ticksPerMilliSecond = ticksPerQuarterNote * (beatsPerMinute / 60.) / 1000.0; // for 4/4 tempo
 
@@ -159,7 +163,7 @@ bool Store::prepareAndSaveLastMidi()
 
     // Get number of note on messages. And calculate the duration.
     int numNoteOns = messageTracker.getNumberOfTotalNoteOns();
-    int durationMs = midiSequence.getEndTime() - midiSequence.getStartTime();
+    int durationMs = int(midiSequence.getEndTime() - midiSequence.getStartTime());
 
     // Save the midi file
     bool filesSaved = false;

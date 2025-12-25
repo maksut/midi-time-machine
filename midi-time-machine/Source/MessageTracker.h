@@ -62,7 +62,7 @@ public:
 
             // Similary stop the sustain if active
             if (currentSustain[channel - 1] > 0)
-                midiMessages.addEvent(juce::MidiMessage::controllerEvent(channel, 64, 0.0f), numOfSamplesInBuffer - 1);
+                midiMessages.addEvent(juce::MidiMessage::controllerEvent(channel, 64, 0), numOfSamplesInBuffer - 1);
         }
 
         reset();
