@@ -111,6 +111,12 @@ public:
         minSilence.setRange(1, 30, 0.2);
         minSilence.setTextValueSuffix(" sec");
 
+        minDuration.setRange(1, 30, 0.2);
+        minDuration.setTextValueSuffix(" sec");
+
+        minNoOfNotes.setRange(1, 100, 1);
+        minNoOfNotes.setTextValueSuffix(" notes");
+
         minSilenceMultipler.setRange(1, 10, 1);
         minSilenceMultipler.setTextValueSuffix("x");
 
@@ -127,6 +133,10 @@ public:
 
         addAndMakeVisible(minSilence);
         addAndMakeVisible(minSilenceLabel);
+        addAndMakeVisible(minDuration);
+        addAndMakeVisible(minDurationLabel);
+        addAndMakeVisible(minNoOfNotes);
+        addAndMakeVisible(minNoOfNotesLabel);
         addAndMakeVisible(minSilenceMultipler);
         addAndMakeVisible(minSilenceMultiplerLabel);
         addAndMakeVisible(preDelay);
@@ -152,13 +162,17 @@ public:
         using Px = juce::Grid::Px;
         using Margin = juce::GridItem::Margin;
 
-        auto margin = Margin(10, 0, 10, 0);
+        auto margin = Margin(4, 0, 4, 0);
 
-        grid.templateRows = {Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1))};
+        grid.templateRows = {Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1))};
         grid.templateColumns = {Track(Fr(1)), Track(Fr(1))};
         grid.items = {
             juce::GridItem(minSilenceLabel).withMargin(margin),
             juce::GridItem(minSilence).withMargin(margin),
+            juce::GridItem(minDurationLabel).withMargin(margin),
+            juce::GridItem(minDuration).withMargin(margin),
+            juce::GridItem(minNoOfNotesLabel).withMargin(margin),
+            juce::GridItem(minNoOfNotes).withMargin(margin),
             juce::GridItem(minSilenceMultiplerLabel).withMargin(margin),
             juce::GridItem(minSilenceMultipler).withMargin(margin),
             juce::GridItem(preDelayLabel).withMargin(margin),
@@ -179,6 +193,8 @@ public:
         if (button == &okButton)
         {
             state.setMinSilenceMs(int(minSilence.getValue() * 1000.0f));
+            state.setMinDurationMs(int(minDuration.getValue() * 1000.0f));
+            state.setMinNoOfNotes(int(minNoOfNotes.getValue()));
             state.setMinSilenceMultiplier(int(minSilenceMultipler.getValue()));
             state.setPredelayMs(int(preDelay.getValue()));
             state.setMidiTimeFormat(midiTimeFormat.getSelectedId() == 1 ? "TPQ" : "SMPTE");
@@ -196,6 +212,8 @@ public:
     void reloadSettings()
     {
         minSilence.setValue(state.getMinSilenceMs() / 1000.0f);
+        minDuration.setValue(state.getMinDurationMs() / 1000.0f);
+        minNoOfNotes.setValue(state.getMinNoOfNotes());
         minSilenceMultipler.setValue(state.getMinSilenceMultiplier());
         preDelay.setValue(state.getPredelayMs(), juce::NotificationType::dontSendNotification);
         midiTimeFormat.setSelectedId(state.getMidiTimeFormat() == "TPQ" ? 1 : 2);
@@ -207,6 +225,12 @@ private:
 
     juce::Slider minSilence{"MinSilence"};
     juce::Label minSilenceLabel{"MinSilenceLabel", "Minimum silence:"};
+
+    juce::Slider minDuration{"MinDuration"};
+    juce::Label minDurationLabel{"MinDurationLabel", "Minimum duration:"};
+
+    juce::Slider minNoOfNotes{"MinNoOfNotes"};
+    juce::Label minNoOfNotesLabel{"MinNoOfNotes", "Minimum no of notes:"};
 
     juce::Slider minSilenceMultipler{"MinSilenceMultiplier"};
     juce::Label minSilenceMultiplerLabel{"MinSilenceMultiplierLabel", "Minimum silence multiplier:"};

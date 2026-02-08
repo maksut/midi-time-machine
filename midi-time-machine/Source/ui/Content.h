@@ -68,7 +68,7 @@ public:
         juce::Rectangle topLeft(bounds);
 
         topLeft.setWidth(400);
-        topLeft.setHeight(250);
+        topLeft.setHeight(275);
         topLeft.setX(bounds.getX() + bounds.getWidth() - topLeft.getWidth());
 
         if (topLeft.getWidth() < bounds.getWidth() && topLeft.getHeight() < bounds.getHeight())

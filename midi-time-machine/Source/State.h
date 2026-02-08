@@ -24,6 +24,8 @@ public:
     void resetSettings()
     {
         settings.setProperty(minSilenceId, 4000, nullptr);
+        settings.setProperty(minDurationId, 4000, nullptr);
+        settings.setProperty(minNoOfNotesId, 5, nullptr);
         settings.setProperty(minSilenceMultiplierId, 5, nullptr);
         settings.setProperty(predelayId, 1000, nullptr);
         settings.setProperty(midiTimeFormatId, "TPQ", nullptr); // "TPQ" or "SMPTE" // Ticks Per Quarter note or absolute time
@@ -77,6 +79,26 @@ public:
     void setMinSilenceMs(int minSilenceMs)
     {
         settings.setProperty(minSilenceId, minSilenceMs, nullptr);
+    }
+
+    int getMinDurationMs()
+    {
+        return settings.getProperty(minDurationId);
+    }
+
+    void setMinDurationMs(int minDurationMs)
+    {
+        settings.setProperty(minDurationId, minDurationMs, nullptr);
+    }
+
+    int getMinNoOfNotes()
+    {
+        return settings.getProperty(minNoOfNotesId);
+    }
+
+    void setMinNoOfNotes(int minNoOfNotes)
+    {
+        settings.setProperty(minNoOfNotesId, minNoOfNotes, nullptr);
     }
 
     int getMinSilenceMultiplier()
@@ -207,6 +229,8 @@ private:
 
     // Settings properties - user visible
     static inline const juce::Identifier minSilenceId{"minSilenceMs"};
+    static inline const juce::Identifier minDurationId{"minDurationMs"};
+    static inline const juce::Identifier minNoOfNotesId{"minNoOfNotes"};
     static inline const juce::Identifier minSilenceMultiplierId{"minSilenceMultiplier"};
     static inline const juce::Identifier predelayId{"predelayMs"};
     static inline const juce::Identifier midiTimeFormatId{"midiTimeFormatId"};

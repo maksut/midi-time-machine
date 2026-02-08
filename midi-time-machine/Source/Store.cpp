@@ -162,12 +162,21 @@ bool Store::prepareAndSaveLastMidi()
     // Update the Note ON & OFF pairs
     midiSequence.updateMatchedPairs();
 
-    // Timestamps are millisecond durations; since the Processor::processBlock started to run till the midi message arrived.
-    midiSequence.addTimeToMessages(state.getPredelayMs() - midiSequence.getStartTime());
-
     // Get number of note on messages. And calculate the duration.
     int numNoteOns = messageTracker.getNumberOfTotalNoteOns();
     int durationMs = int(midiSequence.getEndTime() - midiSequence.getStartTime());
+
+    if (numNoteOns < state.getMinNoOfNotes() || durationMs < state.getMinDurationMs())
+    {
+        // Message too small. Dropping it.
+        midiSequence.clear();
+        messageTracker.reset();
+
+        return true;
+    }
+
+    // Timestamps are millisecond durations; since the Processor::processBlock started to run till the midi message arrived.
+    midiSequence.addTimeToMessages(state.getPredelayMs() - midiSequence.getStartTime());
 
     // Save the midi file
     bool filesSaved = false;
