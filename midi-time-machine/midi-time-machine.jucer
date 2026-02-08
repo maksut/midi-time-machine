@@ -3,16 +3,20 @@
 <JUCERPROJECT id="Qfw5Bh" name="midi-time-machine" projectType="audioplug"
               useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1"
               pluginCharacteristicsValue="pluginIsMidiEffectPlugin,pluginProducesMidiOut,pluginWantsMidiIn"
-              companyWebsite="miskin" pluginVST3Category="Fx,Instrument,Tools">
+              companyWebsite="MTM" pluginVST3Category="Fx,Instrument,Tools"
+              pluginManufacturer="MTM" pluginName="MIDI Time Machine" pluginDesc="MIDI Time Machine"
+              aaxIdentifier="com.machine.midi.time" companyName="MTM" bundleIdentifier="com.mtm.miditimemachine">
   <MAINGROUP id="BzG0Sb" name="midi-time-machine">
     <GROUP id="{073F65DA-FCCF-AFC5-4D2C-BEBA49438769}" name="ui">
       <FILE id="pENVQp" name="Content.h" compile="0" resource="0" file="Source/ui/Content.h"/>
       <FILE id="dLiGu7" name="Editor.cpp" compile="1" resource="0" file="Source/ui/Editor.cpp"/>
       <FILE id="fg4lq6" name="Editor.h" compile="0" resource="0" file="Source/ui/Editor.h"/>
+      <FILE id="AuZzok" name="Keyboard.h" compile="0" resource="0" file="Source/ui/Keyboard.h"/>
       <FILE id="VRHjee" name="Resources.cpp" compile="1" resource="0" file="Source/ui/Resources.cpp"/>
       <FILE id="D8nOer" name="Resources.h" compile="0" resource="0" file="Source/ui/Resources.h"/>
       <FILE id="sOaC3H" name="Settings.h" compile="0" resource="0" file="Source/ui/Settings.h"/>
       <FILE id="ZUmH5u" name="Toolbar.h" compile="0" resource="0" file="Source/ui/Toolbar.h"/>
+      <FILE id="svCVb3" name="VelocityLines.h" compile="0" resource="0" file="Source/ui/VelocityLines.h"/>
     </GROUP>
     <FILE id="TIGmRL" name="MessageTracker.h" compile="0" resource="0"
           file="Source/MessageTracker.h"/>

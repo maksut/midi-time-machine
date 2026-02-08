@@ -48,6 +48,7 @@ public:
 
 private:
     void flushAndReset();
+    bool isHostPlaying();
 
     juce::AudioParameterFloat *testParam;
 

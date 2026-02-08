@@ -295,3 +295,8 @@ juce::File Store::getRootDataDir()
 
     return rootDir;
 }
+
+MessageTracker &Store::getMessageTracker()
+{
+    return messageTracker;
+}

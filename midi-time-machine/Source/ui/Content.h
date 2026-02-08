@@ -4,17 +4,25 @@
 #include "Resources.h"
 #include "../Store.h"
 #include "Settings.h"
+#include "Keyboard.h"
 
 class Content : public juce::Component,
                 public juce::ValueTree::Listener
 {
 public:
-    Content(State &stateArg, Store &store) : state(stateArg), store(store), settings(stateArg)
+    Content(State &stateArg, Store &store)
+        : state(stateArg),
+          store(store),
+          settings(stateArg),
+          keyboard(store.getMessageTracker())
     {
+        state.addListener(this);
+
+        addAndMakeVisible(keyboard);
+
+        // Adding settings last so it will be on front
         addChildComponent(settings);
         settings.setVisible(state.isSettinsOpen());
-
-        state.addListener(this);
     }
 
     ~Content() override
@@ -42,17 +50,21 @@ public:
         g.setColour(juce::Colours::white);
         g.setFont(juce::FontOptions(15.0f));
 
+        /*
         auto bounds = getTopLevelComponent()->getLocalBounds();
 
         juce::String text;
         text << "Window size: " << bounds.getWidth() << "x" << bounds.getHeight();
 
         g.drawFittedText(text, getLocalBounds(), juce::Justification::centred, 1);
+        */
     }
 
     void resized() override
     {
         juce::Rectangle bounds = getLocalBounds();
+
+        // Settings panel
         juce::Rectangle topLeft(bounds);
 
         topLeft.setWidth(400);
@@ -63,10 +75,15 @@ public:
             settings.setBounds(topLeft);
         else
             settings.setBounds(bounds);
+
+        // Keyboard panel
+        int keyboardMargin = 10;
+        keyboard.setBounds(bounds.withSizeKeepingCentre(bounds.getWidth() - keyboardMargin, bounds.getHeight() - keyboardMargin));
     }
 
 private:
     State &state;
     Store &store;
     Settings settings;
+    Keyboard keyboard;
 };

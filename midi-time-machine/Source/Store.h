@@ -21,6 +21,8 @@ public:
     juce::String getLastSavedFileDescription();
     juce::String getLastSavedFilePath();
 
+    MessageTracker &getMessageTracker();
+
 private:
     void drainProcessorMidiQueue();
     bool saveTpqMidiFile(int noOfNoteOns, int durationMs);

@@ -122,7 +122,7 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
     {
         double millisPerSample = 1000.0 / sampleRate;
 
-        if (!midiMessages.isEmpty())
+        if (!midiMessages.isEmpty() && !isHostPlaying())
         {
             // Midi messages from MidiBuffer have timestamps indicating sample position.
             // Not an actual timstamp, not "ticks per quarter" either.
@@ -243,6 +243,18 @@ std::vector<juce::MidiMessage> Processor::popMidiQueue()
     queue.pop(std::back_inserter(messages));
 
     return messages;
+}
+
+bool Processor::isHostPlaying()
+{
+    if (auto *playHead = getPlayHead())
+    {
+        juce::AudioPlayHead::CurrentPositionInfo positionInfo;
+        if (auto position = playHead->getPosition())
+            return position->getIsPlaying();
+    }
+
+    return false;
 }
 
 // This creates new instances of the plugin..
