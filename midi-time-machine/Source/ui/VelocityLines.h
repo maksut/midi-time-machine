@@ -8,16 +8,19 @@ class VelocityLines : public juce::Component,
                       public juce::ChangeListener
 {
 public:
-    VelocityLines(MessageTracker &messageTracker, juce::MidiKeyboardComponent &keyboardComponent)
-        : messageTracker(messageTracker), keyboardComponent(keyboardComponent)
+    VelocityLines(Store &store, juce::MidiKeyboardComponent &keyboardComponent)
+        : recordingTracker(store.getRecordingTracker()),
+          playbackTracker(store.getPlaybackTracker()),
+          keyboardState(store.getKeyboardState()),
+          keyboardComponent(keyboardComponent)
     {
-        messageTracker.getKeyboardState().addListener(this);
+        keyboardState.addListener(this);
         keyboardComponent.addChangeListener(this);
     }
 
     ~VelocityLines() override
     {
-        messageTracker.getKeyboardState().removeListener(this);
+        keyboardState.removeListener(this);
         keyboardComponent.removeChangeListener(this);
     }
 
@@ -30,7 +33,7 @@ public:
 
         for (int n = rangeStart; n <= rangeEnd; ++n)
         {
-            float velocity = messageTracker.getNoteVelocity(n);
+            float velocity = juce::jmax(recordingTracker.getNoteVelocity(n), playbackTracker.getNoteVelocity(n));
 
             if (velocity > 0.0f)
             {
@@ -56,7 +59,9 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster *) override { repaint(); }
 
 private:
-    MessageTracker &messageTracker;
+    MessageTracker &recordingTracker;
+    MessageTracker &playbackTracker;
+    juce::MidiKeyboardState &keyboardState;
     juce::MidiKeyboardComponent &keyboardComponent;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VelocityLines)

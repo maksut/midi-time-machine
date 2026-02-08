@@ -163,14 +163,13 @@ bool Store::prepareAndSaveLastMidi()
     midiSequence.updateMatchedPairs();
 
     // Get number of note on messages. And calculate the duration.
-    int numNoteOns = messageTracker.getNumberOfTotalNoteOns();
+    int numNoteOns = recordingTracker.getNumberOfTotalNoteOns();
     int durationMs = int(midiSequence.getEndTime() - midiSequence.getStartTime());
 
     if (numNoteOns < state.getMinNoOfNotes() || durationMs < state.getMinDurationMs())
     {
         // Message too small. Dropping it.
-        midiSequence.clear();
-        messageTracker.reset();
+        reset();
 
         return true;
     }
@@ -186,10 +185,7 @@ bool Store::prepareAndSaveLastMidi()
         filesSaved = saveSmpteMidiFile(numNoteOns, durationMs);
 
     if (filesSaved)
-    {
-        midiSequence.clear();
-        messageTracker.reset();
-    }
+        reset();
 
     return filesSaved;
 }
@@ -255,17 +251,32 @@ void Store::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifi
 
 void Store::drainProcessorMidiQueue()
 {
-    std::vector<juce::MidiMessage> messages = processor.popMidiQueue();
+    std::vector<WrappedMessage> messages = processor.popMidiQueue();
 
     if (messages.size() == 0)
         return;
 
-    lastQueueDrainedTimeMs = juce::Time::currentTimeMillis();
+    lastNoteReceivedTimeMs = juce::Time::currentTimeMillis();
 
     for (auto it = messages.begin(); it != messages.end(); ++it)
     {
-        messageTracker.track(*it);
-        midiSequence.addEvent(*it, 0);
+        juce::MidiMessage &message = it->message;
+
+        if (it->isPlayback)
+        {
+            playbackTracker.track(message);
+        }
+        else
+        {
+            recordingTracker.track(message);
+            midiSequence.addEvent(message, 0);
+        }
+
+        // Keyboard state is combined state of the playback and recording trackers
+        if (message.isNoteOn())
+            keyboardState.noteOn(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
+        else if (message.isNoteOff())
+            keyboardState.noteOff(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
     }
 }
 
@@ -276,10 +287,10 @@ void Store::timerCallback()
 
     int minSilenceMs = state.getMinSilenceMs();
 
-    if (messageTracker.hasActiveNotes())
+    if (recordingTracker.hasActiveNotes())
         minSilenceMs *= state.getMinSilenceMultiplier();
 
-    if ((juce::Time::currentTimeMillis() - lastQueueDrainedTimeMs) < minSilenceMs)
+    if ((juce::Time::currentTimeMillis() - lastNoteReceivedTimeMs) < minSilenceMs)
         return;
 
     prepareAndSaveLastMidi();
@@ -305,7 +316,29 @@ juce::File Store::getRootDataDir()
     return rootDir;
 }
 
-MessageTracker &Store::getMessageTracker()
+MessageTracker &Store::getRecordingTracker()
 {
-    return messageTracker;
+    return recordingTracker;
+}
+
+MessageTracker &Store::getPlaybackTracker()
+{
+    return playbackTracker;
+}
+
+juce::MidiKeyboardState &Store::getKeyboardState()
+{
+    return keyboardState;
+}
+
+void Store::reset()
+{
+    midiSequence.clear();
+
+    recordingTracker.reset();
+    playbackTracker.reset();
+
+    // Reset the keyboard state
+    keyboardState.allNotesOff(0);
+    keyboardState.reset();
 }

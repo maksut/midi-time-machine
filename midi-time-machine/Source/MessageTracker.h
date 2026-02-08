@@ -16,15 +16,11 @@ public:
             currentNoteOns[channel - 1][noteNumber] = message.getFloatVelocity();
             ++numActiveNoteOns;
             ++numTotalNoteOns;
-
-            keyboardState.noteOn(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
         }
         else if (message.isNoteOff())
         {
             currentNoteOns[channel - 1][noteNumber] = 0.0f;
             --numActiveNoteOns;
-
-            keyboardState.noteOff(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
         }
         else if (message.isControllerOfType(64)) // is it a sustain event?
         {
@@ -94,15 +90,6 @@ public:
 
         numTotalNoteOns = 0;
         numActiveNoteOns = 0;
-
-        // Reset the keyboard state
-        keyboardState.allNotesOff(0);
-        keyboardState.reset();
-    }
-
-    juce::MidiKeyboardState &getKeyboardState()
-    {
-        return keyboardState;
     }
 
     float getNoteVelocity(int noteNumber) const
@@ -121,7 +108,4 @@ private:
     int currentSustain[16] = {};
     int numTotalNoteOns = 0;
     int numActiveNoteOns = 0;
-
-    // To provide a keyboard state for MidiKeyboardComponent
-    juce::MidiKeyboardState keyboardState;
 };

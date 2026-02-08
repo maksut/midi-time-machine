@@ -2,14 +2,25 @@
 
 #include <JuceHeader.h>
 
+struct WrappedMessage
+{
+    juce::MidiMessage message;
+    bool isPlayback;
+};
+
 class MidiQueue
 {
 public:
-    void push(const juce::MidiMessage &message)
+    void push(const juce::MidiMessage &message, bool isPlayback)
     {
         fifo.write(1)
-            .forEach([&](int dest)
-                     { messages[(size_t)dest] = message; });
+            .forEach(
+                [&](int dest)
+                {
+                    WrappedMessage &wrapedMessage = messages[(size_t)dest];
+                    wrapedMessage.message = message;
+                    wrapedMessage.isPlayback = isPlayback;
+                });
     }
 
     template <typename OutputIt>
@@ -28,5 +39,5 @@ public:
 private:
     static constexpr auto queueSize = 1 << 14;
     juce::AbstractFifo fifo{queueSize};
-    std::vector<juce::MidiMessage> messages = std::vector<juce::MidiMessage>(queueSize);
+    std::vector<WrappedMessage> messages = std::vector<WrappedMessage>(queueSize);
 };

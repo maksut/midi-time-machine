@@ -10,11 +10,7 @@ class Content : public juce::Component,
                 public juce::ValueTree::Listener
 {
 public:
-    Content(State &stateArg, Store &store)
-        : state(stateArg),
-          store(store),
-          settings(stateArg),
-          keyboard(store.getMessageTracker())
+    Content(State &state, Store &store) : state(state), store(store), settings(state), keyboard(store)
     {
         state.addListener(this);
 

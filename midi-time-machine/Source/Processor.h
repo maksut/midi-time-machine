@@ -39,7 +39,7 @@ public:
 
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
-    std::vector<juce::MidiMessage> popMidiQueue();
+    std::vector<WrappedMessage> popMidiQueue();
 
     void startPlayback(const juce::MidiFile &sequence);
     void stopPlayback();

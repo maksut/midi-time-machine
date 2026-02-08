@@ -21,9 +21,12 @@ public:
     juce::String getLastSavedFileDescription();
     juce::String getLastSavedFilePath();
 
-    MessageTracker &getMessageTracker();
+    juce::MidiKeyboardState &getKeyboardState();
+    MessageTracker &getRecordingTracker();
+    MessageTracker &getPlaybackTracker();
 
 private:
+    void reset();
     void drainProcessorMidiQueue();
     bool saveTpqMidiFile(int noOfNoteOns, int durationMs);
     bool saveSmpteMidiFile(int noOfNoteOns, int durationMs);
@@ -44,9 +47,12 @@ private:
     Processor &processor;
     State &state;
     juce::MidiMessageSequence midiSequence;
-    MessageTracker messageTracker;
-    juce::int64 lastQueueDrainedTimeMs = std::numeric_limits<juce::int64>::max();
 
+    juce::MidiKeyboardState keyboardState;
+    MessageTracker recordingTracker;
+    MessageTracker playbackTracker;
+
+    juce::int64 lastNoteReceivedTimeMs = std::numeric_limits<juce::int64>::max();
     std::optional<juce::MidiFile> lastSavedFile = {};
     juce::String lastSavedFileDescription = {};
 

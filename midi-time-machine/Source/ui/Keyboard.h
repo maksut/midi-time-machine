@@ -6,8 +6,9 @@
 class Keyboard : public juce::Component
 {
 public:
-    Keyboard(MessageTracker &messageTracker) : midiKeyboard(messageTracker.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard),
-                                               velocityLines(messageTracker, midiKeyboard)
+    Keyboard(Store &store)
+        : midiKeyboard(store.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard),
+          velocityLines(store, midiKeyboard)
     {
         midiKeyboard.setName("MIDI Keyboard");
         midiKeyboard.setLowestVisibleKey(21 /*A0*/);

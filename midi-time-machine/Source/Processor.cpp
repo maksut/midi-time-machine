@@ -106,6 +106,7 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     auto numOfSamples = buffer.getNumSamples();
+    int initialNumEvents = midiMessages.getNumEvents();
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -122,33 +123,7 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
     {
         double millisPerSample = 1000.0 / sampleRate;
 
-        if (!midiMessages.isEmpty() && !isHostPlaying())
-        {
-            // Midi messages from MidiBuffer have timestamps indicating sample position.
-            // Not an actual timstamp, not "ticks per quarter" either.
-            // So here we calculate absolute time for them, in milliseconds.
-            // It may be possible to capture them with "ticks per quarter" instead,
-            // as they are provided from the host with the hosts BPM.
-            // However tempo is not always available and it can change.
-            // It is simpler to capture absolute times. Then later they can be converted to TPQ if needed.
-
-            for (const auto metadata : midiMessages)
-            {
-                auto message = metadata.getMessage();
-                auto originalTimestamp = message.getTimeStamp();
-
-                message.setTimeStamp((sampleCount + metadata.samplePosition) * millisPerSample);
-                queue.push(message);
-
-                // Not sure this is needed. It is an attempt to keep midi through intact.
-                message.setTimeStamp(originalTimestamp);
-            }
-
-            // Let the listeners know there has been changes (eg. midi messages received).
-            sendChangeMessage();
-        }
-
-        // Now playback midi if available
+        // Playback midi if available
         juce::ScopedTryLock tryLock(playbackLock);
 
         if (tryLock.isLocked())
@@ -175,6 +150,37 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
                 playbackInProgress = false;
                 sendChangeMessage();
             }
+        }
+
+        // Now process all messages. Both coming from the host and from the plugin playback above.
+        if (!midiMessages.isEmpty())
+        {
+            // Midi messages from MidiBuffer have timestamps indicating sample position.
+            // Not an actual timstamp, not "ticks per quarter" either.
+            // So here we calculate absolute time for them, in milliseconds.
+            // It may be possible to capture them with "ticks per quarter" instead,
+            // as they are provided from the host with the hosts BPM.
+            // However tempo is not always available and it can change.
+            // It is simpler to capture absolute times. Then later they can be converted to TPQ if needed.
+
+            int numMessages = 0;
+            for (const auto metadata : midiMessages)
+            {
+                juce::MidiMessage message = metadata.getMessage();
+                double originalTimestamp = message.getTimeStamp();
+
+                message.setTimeStamp((sampleCount + metadata.samplePosition) * millisPerSample);
+                ++numMessages;
+
+                bool isPluginPlayback = numMessages > initialNumEvents;
+                queue.push(message, isHostPlaying() || isPluginPlayback);
+
+                // Not sure this is needed. It is an attempt to keep midi through intact.
+                message.setTimeStamp(originalTimestamp);
+            }
+
+            // Let the listeners know there has been changes (eg. midi messages received).
+            sendChangeMessage();
         }
     }
 
@@ -236,9 +242,9 @@ State &Processor::getState()
     return *state;
 }
 
-std::vector<juce::MidiMessage> Processor::popMidiQueue()
+std::vector<WrappedMessage> Processor::popMidiQueue()
 {
-    std::vector<juce::MidiMessage> messages;
+    std::vector<WrappedMessage> messages;
 
     queue.pop(std::back_inserter(messages));
 
