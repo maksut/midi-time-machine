@@ -19,7 +19,9 @@ public:
     typedef std::optional<std::reference_wrapper<const juce::MidiFile>> MaybeMidiFile;
     MaybeMidiFile getLastSavedMidiFile();
     juce::String getLastSavedFileDescription();
-    juce::String getLastSavedFilePath();
+
+    typedef std::optional<std::reference_wrapper<const juce::File>> MaybeFile;
+    MaybeFile getParentDirForLastSave();
 
     juce::MidiKeyboardState &getKeyboardState();
     MessageTracker &getRecordingTracker();
@@ -54,6 +56,7 @@ private:
 
     juce::int64 lastNoteReceivedTimeMs = std::numeric_limits<juce::int64>::max();
     std::optional<juce::MidiFile> lastSavedFile = {};
+    std::optional<juce::File> parentDirForLastSave = {};
     juce::String lastSavedFileDescription = {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Store)

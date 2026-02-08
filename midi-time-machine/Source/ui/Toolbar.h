@@ -114,7 +114,12 @@ public:
         }
         else if (button == &openButton)
         {
-            juce::URL(state.getRootDataDir()).launchInDefaultBrowser();
+            std::optional<juce::File> parentDir = store.getParentDirForLastSave();
+
+            if (parentDir && parentDir->exists() && parentDir->isDirectory())
+                juce::URL(*parentDir).launchInDefaultBrowser();
+            else
+                juce::URL(state.getRootDataDir()).launchInDefaultBrowser();
         }
         else if (button == &settingsButton)
         {

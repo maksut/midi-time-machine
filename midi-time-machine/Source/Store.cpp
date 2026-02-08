@@ -51,9 +51,12 @@ bool Store::saveMidiFile(
     juce::String seconds;
     seconds << juce::String(juce::roundToInt(durationMs / 1000));
 
+    juce::String dateAndDay;
+    dateAndDay << date << " " << day;
+
     juce::MemoryOutputStream filename;
     filename
-        << date << " " << day << " "
+        << dateAndDay << " "
         << hours << "-" << mins << "-" << secs << " "
         << juce::String(noOfNoteOns) << " notes " << seconds << " seconds"
         << filenamePostfix << juce::String(".mid");
@@ -64,7 +67,7 @@ bool Store::saveMidiFile(
         << hours << ":" << mins << ":" << secs << "\n"
         << juce::String(noOfNoteOns) << " notes, " << seconds << " seconds";
 
-    juce::File parentDir = getRootDataDir().getChildFile(yearAndMonth);
+    juce::File parentDir = getRootDataDir().getChildFile(yearAndMonth).getChildFile(dateAndDay);
 
     if (!parentDir.exists())
     {
@@ -92,6 +95,7 @@ bool Store::saveMidiFile(
     // File is saved
     lastSavedFile = midiFile;
     lastSavedFileDescription = description.toUTF8();
+    parentDirForLastSave = parentDir;
 
     // Trigger the midi file available change
     state.toggleIsMidiFileChange();
@@ -299,6 +303,11 @@ void Store::timerCallback()
 Store::MaybeMidiFile Store::getLastSavedMidiFile()
 {
     return lastSavedFile;
+}
+
+Store::MaybeFile Store::getParentDirForLastSave()
+{
+    return parentDirForLastSave;
 }
 
 juce::String Store::getLastSavedFileDescription()

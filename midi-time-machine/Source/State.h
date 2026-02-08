@@ -113,7 +113,6 @@ public:
 
     juce::String getRootDataDir()
     {
-
         return settings.getProperty(rootDataDirId);
     }
 
