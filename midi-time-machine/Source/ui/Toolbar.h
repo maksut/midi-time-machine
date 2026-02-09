@@ -116,8 +116,8 @@ public:
         {
             std::optional<juce::File> parentDir = store.getParentDirForLastSave();
 
-            if (parentDir && parentDir->exists() && parentDir->isDirectory())
-                juce::URL(*parentDir).launchInDefaultBrowser();
+            if (parentDir && parentDir->isDirectory())
+                juce::URL(parentDir->getFullPathName()).launchInDefaultBrowser();
             else
                 juce::URL(state.getRootDataDir()).launchInDefaultBrowser();
         }
