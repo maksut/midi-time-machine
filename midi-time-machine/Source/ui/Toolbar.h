@@ -38,9 +38,7 @@ public:
         openButton.setImages(open.get());
         settingsButton.setImages(settings.get());
 
-        bool isMidiFileAvailable = store.getLastSavedMidiFile().has_value();
-        playButton.setEnabled(isMidiFileAvailable);
-        exportButton.setEnabled(isMidiFileAvailable);
+        resetButtons();
 
         playButton.addListener(this);
         exportButton.addListener(this);
@@ -62,16 +60,9 @@ public:
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
         if (state.isMidiFileChange(tree, property))
-        {
-            bool isMidiFileAvailable = store.getLastSavedMidiFile().has_value();
-            playButton.setEnabled(isMidiFileAvailable);
-            exportButton.setEnabled(isMidiFileAvailable);
-            midiFileDescription.setText(store.getLastSavedFileDescription(), juce::dontSendNotification);
-        }
+            resetButtons();
         else if (state.isPlaybackInProgressChange(tree, property))
-        {
             playButton.setToggleState(state.isPlaybackInProgress(), juce::dontSendNotification);
-        }
     }
 
     void resized() override
@@ -132,6 +123,14 @@ public:
     }
 
 private:
+    void resetButtons()
+    {
+        bool isMidiFileAvailable = store.getLastSavedMidiFile().has_value();
+        playButton.setEnabled(isMidiFileAvailable);
+        exportButton.setEnabled(isMidiFileAvailable);
+        midiFileDescription.setText(store.getLastSavedFileDescription(), juce::dontSendNotification);
+    }
+
     void onExportClick()
     {
         auto midiFile = store.getLastSavedMidiFile();
