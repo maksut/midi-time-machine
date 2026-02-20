@@ -5,6 +5,7 @@
 #include "../Store.h"
 #include "Toolbar.h"
 #include "Content.h"
+#include "MidiRoll.h"
 
 class Editor : public juce::AudioProcessorEditor, public juce::ValueTree::Listener
 {
@@ -23,6 +24,8 @@ private:
     Store &store;
     juce::TextButton openDataFolderButton;
 
+    MidiRoll midiRoll;
+    MidiPreview midiPreview;
     Toolbar toolbar;
     Content content;
 

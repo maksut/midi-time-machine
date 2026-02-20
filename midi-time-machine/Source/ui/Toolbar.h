@@ -5,18 +5,19 @@
 #include "../Processor.h"
 #include "../State.h"
 #include "../Store.h"
+#include "MidiRoll.h"
 
 class Toolbar : public juce::Component,
                 public juce::Button::Listener,
                 public juce::ValueTree::Listener
 {
 public:
-    Toolbar(Processor &processor, Store &store) : processor(processor), state(processor.getState()), store(store)
+    Toolbar(Processor &processor, Store &store, MidiRoll &midiToolbarPreview, MidiRoll &midiZoomedPreview)
+        : processor(processor), state(processor.getState()), store(store), midiToolbarPreview(midiToolbarPreview), midiZoomedPreview(midiZoomedPreview)
     {
         state.addListener(this);
 
         playButton.setTooltip("Play the last saved midi file");
-        exportButton.setTooltip("Export the last saved midi file");
         openButton.setTooltip("Open the directory of last saved midi file in system explorer");
         settingsButton.setTooltip("In which there is plugin settings");
 
@@ -34,22 +35,19 @@ public:
             stop.get()  // normalImageOn
         );
 
-        exportButton.setImages(exportIcon.get());
         openButton.setImages(open.get());
         settingsButton.setImages(settings.get());
 
-        resetButtons();
+        reset();
 
         playButton.addListener(this);
-        exportButton.addListener(this);
         openButton.addListener(this);
         settingsButton.addListener(this);
 
         addAndMakeVisible(playButton);
-        addAndMakeVisible(exportButton);
-        addAndMakeVisible(midiFileDescription);
         addAndMakeVisible(openButton);
         addAndMakeVisible(settingsButton);
+        addAndMakeVisible(midiToolbarPreview);
     }
 
     ~Toolbar() override
@@ -59,10 +57,14 @@ public:
 
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
-        if (state.isMidiFileChange(tree, property))
-            resetButtons();
-        else if (state.isPlaybackInProgressChange(tree, property))
-            playButton.setToggleState(state.isPlaybackInProgress(), juce::dontSendNotification);
+        if (state.isSelectedMidiFileChange(tree, property))
+            reset();
+        else if (state.isPlaybackTimeSecChange(tree, property))
+        {
+            bool isPlaybackInProgress = state.getPlaybackTimeSec() >= 0;
+
+            playButton.setToggleState(isPlaybackInProgress, juce::dontSendNotification);
+        }
     }
 
     void resized() override
@@ -78,8 +80,9 @@ public:
 
         fb.items = {
             juce::FlexItem(playButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
-            juce::FlexItem(exportButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
-            juce::FlexItem(midiFileDescription).withMargin(5).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
+
+            juce::FlexItem(midiToolbarPreview).withMargin(5).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
+
             juce::FlexItem(openButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
             juce::FlexItem(settingsButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
         };
@@ -97,83 +100,91 @@ public:
             }
             else
             {
-                auto midiFile = store.getLastSavedMidiFile();
+                std::optional<juce::File> file = getSelectedMidiFile();
 
-                if (midiFile)
-                    processor.startPlayback(*midiFile);
+                if (file)
+                {
+                    juce::FileInputStream fileStream(*file);
+                    juce::MidiFile midiFile;
+
+                    if (midiFile.readFrom(fileStream))
+                        processor.startPlayback(midiFile);
+                }
             }
         }
         else if (button == &openButton)
         {
-            std::optional<juce::File> parentDir = store.getParentDirForLastSave();
-
-            if (parentDir && parentDir->isDirectory())
-                juce::URL(parentDir->getFullPathName()).launchInDefaultBrowser();
-            else
-                juce::URL(state.getRootDataDir()).launchInDefaultBrowser();
+            onOpenClick();
         }
         else if (button == &settingsButton)
         {
             state.toggleSettingsOpen();
         }
-        else if (button == &exportButton)
-        {
-            onExportClick();
-        }
     }
 
 private:
-    void resetButtons()
+    std::optional<juce::File> getSelectedMidiFile()
     {
-        bool isMidiFileAvailable = store.getLastSavedMidiFile().has_value();
-        playButton.setEnabled(isMidiFileAvailable);
-        exportButton.setEnabled(isMidiFileAvailable);
-        midiFileDescription.setText(store.getLastSavedFileDescription(), juce::dontSendNotification);
+        juce::File file(state.getSelectedMidiFile().trim());
+
+        if (file.existsAsFile())
+            return file;
+        else
+            return {};
     }
 
-    void onExportClick()
+    std::optional<juce::File> getParentDirOfSelectedMidiFile()
     {
-        auto midiFile = store.getLastSavedMidiFile();
+        juce::File file(state.getSelectedMidiFile().trim());
 
-        if (!midiFile)
-            return; // No midi file available. Nothing to do
+        if (file.existsAsFile())
+            return file.getParentDirectory();
+        else
+            return {};
+    }
 
-        fileChooser.reset(
-            new juce::FileChooser("Export last saved midi file...",
-                                  juce::File(state.getLastExportDir()),
-                                  "*.mid", true));
+    void reset()
+    {
+        std::optional<juce::File> selectedFile = getSelectedMidiFile();
+
+        if (selectedFile)
+        {
+            juce::FileInputStream fileStream(*selectedFile);
+            juce::MidiFile midiFile;
+
+            if (midiFile.readFrom(fileStream))
+            {
+                midiZoomedPreview.load(midiFile);
+                midiToolbarPreview.load(midiFile);
+            }
+            else
+            {
+                showWarning(juce::String("Failed to load file:\n") + selectedFile->getFileName());
+            }
+        }
+
+        playButton.setEnabled(selectedFile.has_value());
+    }
+
+    void onOpenClick()
+    {
+        std::optional<juce::File> parentDir = getParentDirOfSelectedMidiFile();
+        juce::File currentDir = parentDir && parentDir->isDirectory() ? *parentDir : state.getRootDataDir();
+
+        fileChooser.reset(new juce::FileChooser("Load a midi file...", currentDir, "*.mid", true));
 
         fileChooser->launchAsync(
-            juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles,
-            [this, midiFile](const juce::FileChooser &chooser)
+            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+            [this](const juce::FileChooser &chooser)
             {
-                auto result = chooser.getURLResult();
+                auto selectedFile = chooser.getURLResult();
 
-                if (!exportMidiFile(*midiFile, result))
-                {
-                    auto name = result.isLocalFile() ? result.getLocalFile().getFullPathName() : result.toString(true);
-                    showWarning(juce::String("Failed to save file:\n") + name);
-                }
+                if (selectedFile.isEmpty() || !selectedFile.isLocalFile())
+                    return; // Nothing selected so nothing to do. This is not an error.
+
+                juce::File file = selectedFile.getLocalFile();
+                state.setSelectedMidiFile(file.getFullPathName());
             });
-    }
-
-    bool exportMidiFile(const juce::MidiFile &midiFile, const juce::URL &selectedFile)
-    {
-        if (selectedFile.isEmpty() || !selectedFile.isLocalFile())
-            return true; // Nothing selected so nothing to do. This is not an error.
-
-        juce::FileOutputStream stream(selectedFile.getLocalFile());
-
-        if (!stream.openedOk())
-            return false; // Couldn't write the file
-
-        if (!midiFile.writeTo(stream))
-            return false; // Couldn't write the file
-
-        // All is fine
-        state.setLastExportDir(stream.getFile().getParentDirectory().getFullPathName());
-
-        return true;
     }
 
     void showWarning(const juce::String &message)
@@ -190,14 +201,14 @@ private:
 private:
     juce::TooltipWindow tooltipWindow;
     juce::DrawableButton playButton{"Play", juce::DrawableButton::ImageOnButtonBackground};
-    juce::DrawableButton exportButton{"Export", juce::DrawableButton::ImageOnButtonBackground};
     juce::DrawableButton openButton{"Open", juce::DrawableButton::ImageOnButtonBackground};
     juce::DrawableButton settingsButton{"Settings", juce::DrawableButton::ImageOnButtonBackground};
-    juce::Label midiFileDescription{"MidiFileDescription", "Nothing captured yet\nPlay something"};
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::ScopedMessageBox messageBox;
 
     Processor &processor;
     State &state;
     Store &store;
+    MidiRoll &midiToolbarPreview;
+    MidiRoll &midiZoomedPreview;
 };

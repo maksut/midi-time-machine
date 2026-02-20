@@ -6,30 +6,21 @@
 class Processor;
 class State;
 
-class Store : public juce::ValueTree::Listener, juce::Timer
+class Store : public juce::Timer
 {
 public:
     Store(Processor &processor);
-    virtual ~Store();
 
     void timerCallback() override;
-    void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override;
     bool prepareAndSaveLastMidi();
-
-    typedef std::optional<std::reference_wrapper<const juce::MidiFile>> MaybeMidiFile;
-    MaybeMidiFile getLastSavedMidiFile();
-    juce::String getLastSavedFileDescription();
-
-    typedef std::optional<std::reference_wrapper<const juce::File>> MaybeFile;
-    MaybeFile getParentDirForLastSave();
 
     juce::MidiKeyboardState &getKeyboardState();
     MessageTracker &getRecordingTracker();
     MessageTracker &getPlaybackTracker();
+    void drainProcessorMidiQueue();
 
 private:
     void reset();
-    void drainProcessorMidiQueue();
     bool saveTpqMidiFile(int noOfNoteOns, int durationMs);
     bool saveSmpteMidiFile(int noOfNoteOns, int durationMs);
     juce::File getRootDataDir();
@@ -55,9 +46,6 @@ private:
     MessageTracker playbackTracker;
 
     juce::int64 lastNoteReceivedTimeMs = std::numeric_limits<juce::int64>::max();
-    std::optional<juce::MidiFile> lastSavedFile = {};
-    std::optional<juce::File> parentDirForLastSave = {};
-    juce::String lastSavedFileDescription = {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Store)
 };

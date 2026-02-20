@@ -2,18 +2,15 @@
 #include "ui/Editor.h"
 #include "Store.h"
 #include "Playback.h"
+#include "ValueTreeLogger.h"
+
+const int POLL_TIME_MILLIS = 1000;
 
 Processor::Processor()
 {
     state.reset(new State());
+    valueTreeLogger.reset(new ValueTreeLogger(*state));
     store.reset(new Store(*this));
-
-    addParameter(testParam = new juce::AudioParameterFloat(
-                     juce::ParameterID{"testParam", 1}, // parameterID
-                     "Test Parameter",                  // parameter name
-                     0.0f,                              // minimum value
-                     1.0f,                              // maximum value
-                     0.5f));                            // default value
 
     playbackRequest.reset(new Playback());
     currentlyPlaying.reset(new Playback());
@@ -23,6 +20,9 @@ Processor::Processor()
     // Then the processor modifies related bit of the ValueTree in the state.
     // So other listener can listen for specific changes.
     addChangeListener(this);
+
+    // Start the timer
+    startTimer(POLL_TIME_MILLIS);
 }
 
 Processor::~Processor()
@@ -132,11 +132,11 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
             {
                 // Mark the currentlyPlaying sequence as done
                 currentlyPlaying->stop(midiMessages, numOfSamples);
+                playbackTimeSec = -1;
 
                 // Then swap the pointers
                 std::swap(currentlyPlaying, playbackRequest);
 
-                playbackInProgress = true;
                 sendChangeMessage();
             }
         }
@@ -144,10 +144,11 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
         // If there is a current playback ready then play it
         if (currentlyPlaying->isReadyToPlay())
         {
-            if (currentlyPlaying->play(midiMessages, numOfSamples, millisPerSample))
+            playbackTimeSec = currentlyPlaying->play(midiMessages, numOfSamples, millisPerSample);
+
+            if (playbackTimeSec.get() < 0.0f)
             {
                 // The playback is stopped. All midi messages are played.
-                playbackInProgress = false;
                 sendChangeMessage();
             }
         }
@@ -220,6 +221,20 @@ void Processor::getStateInformation(juce::MemoryBlock &destData)
 {
     if (auto xml = state->toXml())
         copyXmlToBinary(*xml, destData);
+
+    // Reset the state properties according the Processor state
+    state->setPlaybackTimeSec(playbackTimeSec.get());
+}
+
+void Processor::setStateInformation(const void *data, int sizeInBytes)
+{
+    if (auto xmlState = getXmlFromBinary(data, sizeInBytes))
+        state->fromXml(xmlState);
+}
+
+void Processor::timerCallback()
+{
+    state->setPlaybackTimeSec(playbackTimeSec.get());
 }
 
 void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
@@ -227,14 +242,8 @@ void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
     if (source != this)
         return;
 
-    state->setMidiMessagesAvailable(queue.size() > 0);
-    state->setPlaybackInProgress(playbackInProgress.get());
-}
-
-void Processor::setStateInformation(const void *data, int sizeInBytes)
-{
-    if (auto xmlState = getXmlFromBinary(data, sizeInBytes))
-        state->fromXml(xmlState);
+    store->drainProcessorMidiQueue();
+    state->setPlaybackTimeSec(playbackTimeSec.get());
 }
 
 State &Processor::getState()
@@ -256,6 +265,7 @@ bool Processor::isHostPlaying()
     if (auto *playHead = getPlayHead())
     {
         juce::AudioPlayHead::CurrentPositionInfo positionInfo;
+
         if (auto position = playHead->getPosition())
             return position->getIsPlaying();
     }

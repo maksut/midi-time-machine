@@ -6,8 +6,9 @@
 class State;
 class Store;
 class Playback;
+class ValueTreeLogger;
 
-class Processor : public juce::AudioProcessor, public juce::ChangeBroadcaster, public juce::ChangeListener
+class Processor : public juce::AudioProcessor, public juce::ChangeBroadcaster, public juce::ChangeListener, public juce::Timer
 {
 public:
     Processor();
@@ -37,6 +38,7 @@ public:
     void getStateInformation(juce::MemoryBlock &destData) override;
     void setStateInformation(const void *data, int sizeInBytes) override;
 
+    void timerCallback() override;
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
     std::vector<WrappedMessage> popMidiQueue();
@@ -50,19 +52,16 @@ private:
     void flushAndReset();
     bool isHostPlaying();
 
-    juce::AudioParameterFloat *testParam;
-
     MidiQueue queue;
     std::unique_ptr<State> state;
+    std::unique_ptr<ValueTreeLogger> valueTreeLogger;
     std::unique_ptr<Store> store;
-    juce::MidiMessageSequence recordedMidiMessages;
     juce::int64 sampleCount = 0;
-    juce::int64 lastNonZeroSampleRate = 44100;
 
     juce::CriticalSection playbackLock;
     std::unique_ptr<Playback> playbackRequest;
     std::unique_ptr<Playback> currentlyPlaying;
-    juce::Atomic<bool> playbackInProgress = false;
+    juce::Atomic<double> playbackTimeSec = -1.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
 };

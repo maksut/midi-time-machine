@@ -5,14 +5,22 @@
 #include "../Store.h"
 #include "Settings.h"
 #include "Keyboard.h"
+#include "MidiRoll.h"
 
 class Content : public juce::Component,
                 public juce::ValueTree::Listener
 {
 public:
-    Content(State &state, Store &store) : state(state), store(store), settings(state), keyboard(store)
+    Content(State &state, Store &store, MidiRoll &midiRoll) : state(state), store(store), settings(state), keyboard(store), midiRoll(midiRoll)
     {
         state.addListener(this);
+
+        midiFileName.setFont(midiFileName.getFont().withHeight(18));
+        midiFileName.setAlpha(0.5);
+        resetMidiFileName();
+
+        addAndMakeVisible(midiFileName);
+        addAndMakeVisible(midiRoll);
 
         addAndMakeVisible(keyboard);
 
@@ -28,7 +36,13 @@ public:
 
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
-        if (state.isSettinsOpenChange(tree, property))
+        if (state.isSelectedMidiFileChange(tree, property))
+        {
+            resetMidiFileName();
+            resized();
+            repaint();
+        }
+        else if (state.isSettinsOpenChange(tree, property))
         {
             bool isOpen = state.isSettinsOpen();
 
@@ -36,6 +50,12 @@ public:
                 settings.reloadSettings();
 
             settings.setVisible(isOpen);
+        }
+        else if (state.isPanelHeightRatioChange(tree, property))
+        {
+            panelHeigthRatio = state.getPanelHeightRatio();
+            resized();
+            repaint();
         }
     }
 
@@ -72,14 +92,60 @@ public:
         else
             settings.setBounds(bounds);
 
+        // Filename
+        juce::TextLayout layout;
+        juce::AttributedString attributedString;
+        attributedString.append(midiFileName.getText(), midiFileName.getFont());
+        layout.createLayout(attributedString, bounds.getWidth());
+
+        int labelWidth = (int)layout.getWidth();
+        int labelHeight = (int)layout.getHeight();
+
+        midiFileName.setBounds((bounds.getWidth() - labelWidth) / 2,
+                               4,
+                               labelWidth,
+                               labelHeight);
+
+        // Midi preview
+        int margin = 5;
+        int panelWidth = bounds.getWidth() - (2 * margin);
+
+        int previewHeight = (bounds.getHeight() - 60) * panelHeigthRatio; // 60 keyboard size
+
+        juce::Rectangle<int> previewBounds(
+            margin,
+            margin,
+            panelWidth,
+            previewHeight - (2 * margin));
+
+        midiRoll.setBounds(previewBounds);
+
         // Keyboard panel
-        int keyboardMargin = 10;
-        keyboard.setBounds(bounds.withSizeKeepingCentre(bounds.getWidth() - keyboardMargin, bounds.getHeight() - keyboardMargin));
+        juce::Rectangle<int> keyboardBounds(
+            margin,
+            previewHeight,
+            panelWidth,
+            getHeight() - previewHeight - margin);
+
+        keyboard.setBounds(keyboardBounds);
+    }
+
+private:
+    void resetMidiFileName()
+    {
+        juce::File file(state.getSelectedMidiFile());
+        juce::String filename = file.existsAsFile() ? file.getFileNameWithoutExtension() : "";
+
+        midiFileName.setText(filename, juce::dontSendNotification);
     }
 
 private:
     State &state;
     Store &store;
+    MidiRoll &midiRoll;
     Settings settings;
     Keyboard keyboard;
+    float panelHeigthRatio = 0.5;
+
+    juce::Label midiFileName{"MidiFileName", ""};
 };

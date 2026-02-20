@@ -6,17 +6,8 @@ const int POLL_TIME_MILLIS = 1000;
 
 Store::Store(Processor &processor) : processor(processor), state(processor.getState())
 {
-    // Start listening the state for changes
-    state.addListener(this);
-
     // Start the timer
     startTimer(POLL_TIME_MILLIS);
-}
-
-Store::~Store()
-{
-    // And stop listening the state
-    state.removeListener(this);
 }
 
 bool Store::saveMidiFile(
@@ -61,12 +52,6 @@ bool Store::saveMidiFile(
         << juce::String(noOfNoteOns) << " notes " << seconds << " seconds"
         << filenamePostfix << juce::String(".mid");
 
-    juce::MemoryOutputStream description;
-    description
-        << date << " " << day << "\n"
-        << hours << ":" << mins << ":" << secs << "\n"
-        << juce::String(noOfNoteOns) << " notes, " << seconds << " seconds";
-
     juce::File parentDir = getRootDataDir().getChildFile(yearAndMonth).getChildFile(dateAndDay);
 
     if (!parentDir.exists())
@@ -92,13 +77,8 @@ bool Store::saveMidiFile(
     if (!midiFile.writeTo(stream))
         return false;
 
-    // File is saved
-    lastSavedFile = midiFile;
-    lastSavedFileDescription = description.toUTF8();
-    parentDirForLastSave = parentDir;
-
-    // Trigger the midi file available change
-    state.toggleIsMidiFileChange();
+    // File is saved. Update the selected midi file.
+    state.setSelectedMidiFile(targetFile.getFullPathName());
 
     return true;
 }
@@ -244,21 +224,14 @@ juce::String Store::getDataString(const juce::MidiMessage &m)
     return {};
 }
 
-void Store::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property)
-{
-    if (state.isMidiMessagesAvailableChange(tree, property) && state.isMidiMessagesAvailable())
-    {
-        state.setMidiMessagesAvailable(false);
-        drainProcessorMidiQueue();
-    }
-}
-
 void Store::drainProcessorMidiQueue()
 {
     std::vector<WrappedMessage> messages = processor.popMidiQueue();
 
     if (messages.size() == 0)
         return;
+
+    state.setIsRecordingInProgress(true);
 
     lastNoteReceivedTimeMs = juce::Time::currentTimeMillis();
 
@@ -300,21 +273,6 @@ void Store::timerCallback()
     prepareAndSaveLastMidi();
 }
 
-Store::MaybeMidiFile Store::getLastSavedMidiFile()
-{
-    return lastSavedFile;
-}
-
-Store::MaybeFile Store::getParentDirForLastSave()
-{
-    return parentDirForLastSave;
-}
-
-juce::String Store::getLastSavedFileDescription()
-{
-    return lastSavedFileDescription;
-}
-
 juce::File Store::getRootDataDir()
 {
     auto rootDir = juce::File(state.getRootDataDir());
@@ -346,6 +304,8 @@ void Store::reset()
 
     recordingTracker.reset();
     playbackTracker.reset();
+
+    state.setIsRecordingInProgress(false);
 
     // Reset the keyboard state
     keyboardState.allNotesOff(0);

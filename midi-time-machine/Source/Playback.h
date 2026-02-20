@@ -9,8 +9,10 @@ public:
     /**
      * Puts zero-or-more midi messages from the playback midi sequence to the midiMessages buffer.
      * This is called in the audio thread!
+     *
+     * @return playhead time in seconds. -1 if not playing.
      */
-    bool play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, double millisPerSample);
+    double play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, double millisPerSample);
 
     /**
      * Called in audio thread

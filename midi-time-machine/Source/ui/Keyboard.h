@@ -13,14 +13,21 @@ public:
         midiKeyboard.setName("MIDI Keyboard");
         midiKeyboard.setLowestVisibleKey(21 /*A0*/);
         midiKeyboard.setAvailableRange(21 /*A0*/, 108 /*C8*/);
+        midiKeyboard.setOctaveForMiddleC(4);
 
         addAndMakeVisible(midiKeyboard);
         addAndMakeVisible(velocityLines);
     }
 
+    void paint(juce::Graphics &g) override
+    {
+        g.setColour(juce::Colours::white.withAlpha(0.2f));
+        g.fillRoundedRectangle(getLocalBounds().toFloat(), 6.0f);
+    }
+
     void resized() override
     {
-        int keyboardHeight = 80;
+        int keyboardHeight = 60;
         int velocityHeight = getHeight() - keyboardHeight;
 
         midiKeyboard.setBounds(0, getHeight() - keyboardHeight, getWidth(), keyboardHeight);

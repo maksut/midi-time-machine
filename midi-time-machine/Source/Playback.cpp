@@ -1,6 +1,6 @@
 #include "Playback.h"
 
-bool Playback::play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, double millisPerSample)
+double Playback::play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, double millisPerSample)
 {
     if (!isReadyToPlay())
         return true; // The midi file is already played
@@ -21,7 +21,7 @@ bool Playback::play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, do
     if (allTracksPlayed)
         reset(); // finished playing the midi file
 
-    return allTracksPlayed;
+    return playheadTimeSeconds;
 }
 
 bool Playback::playOneTrack(

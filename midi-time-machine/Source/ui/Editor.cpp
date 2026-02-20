@@ -5,8 +5,10 @@ Editor::Editor(Processor &processor, Store &midiStore)
       processor(processor),
       state(processor.getState()),
       store(midiStore),
-      toolbar(processor, store),
-      content(processor.getState(), store)
+      midiRoll(state, store, 2),
+      midiPreview(state, store),
+      toolbar(processor, store, midiPreview, midiRoll),
+      content(processor.getState(), store, midiRoll)
 {
     addAndMakeVisible(toolbar);
     addAndMakeVisible(content);

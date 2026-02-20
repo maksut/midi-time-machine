@@ -12,6 +12,7 @@
       <FILE id="dLiGu7" name="Editor.cpp" compile="1" resource="0" file="Source/ui/Editor.cpp"/>
       <FILE id="fg4lq6" name="Editor.h" compile="0" resource="0" file="Source/ui/Editor.h"/>
       <FILE id="AuZzok" name="Keyboard.h" compile="0" resource="0" file="Source/ui/Keyboard.h"/>
+      <FILE id="lPXHwh" name="MidiRoll.h" compile="0" resource="0" file="Source/ui/MidiRoll.h"/>
       <FILE id="VRHjee" name="Resources.cpp" compile="1" resource="0" file="Source/ui/Resources.cpp"/>
       <FILE id="D8nOer" name="Resources.h" compile="0" resource="0" file="Source/ui/Resources.h"/>
       <FILE id="sOaC3H" name="Settings.h" compile="0" resource="0" file="Source/ui/Settings.h"/>

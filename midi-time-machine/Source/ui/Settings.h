@@ -108,6 +108,8 @@ class Settings : public juce::Component, public juce::Button::Listener
 public:
     Settings(State &state) : state(state), rootDataDir(state)
     {
+        panelHeigthRatio.setRange(0, 1, 0.01);
+
         minSilence.setRange(1, 30, 0.2);
         minSilence.setTextValueSuffix(" sec");
 
@@ -131,6 +133,8 @@ public:
         okButton.addListener(this);
         resetButton.addListener(this);
 
+        addAndMakeVisible(panelHeigthRatio);
+        addAndMakeVisible(panelHeigthRatioLabel);
         addAndMakeVisible(minSilence);
         addAndMakeVisible(minSilenceLabel);
         addAndMakeVisible(minDuration);
@@ -164,23 +168,33 @@ public:
 
         auto margin = Margin(4, 0, 4, 0);
 
-        grid.templateRows = {Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1))};
+        grid.templateRows = {Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1))};
         grid.templateColumns = {Track(Fr(1)), Track(Fr(1))};
         grid.items = {
+            juce::GridItem(panelHeigthRatioLabel).withMargin(margin),
+            juce::GridItem(panelHeigthRatio).withMargin(margin),
+
             juce::GridItem(minSilenceLabel).withMargin(margin),
             juce::GridItem(minSilence).withMargin(margin),
+
             juce::GridItem(minDurationLabel).withMargin(margin),
             juce::GridItem(minDuration).withMargin(margin),
+
             juce::GridItem(minNoOfNotesLabel).withMargin(margin),
             juce::GridItem(minNoOfNotes).withMargin(margin),
+
             juce::GridItem(minSilenceMultiplerLabel).withMargin(margin),
             juce::GridItem(minSilenceMultipler).withMargin(margin),
+
             juce::GridItem(preDelayLabel).withMargin(margin),
             juce::GridItem(preDelay).withMargin(margin),
+
             juce::GridItem(midiTimeFormatLabel).withMargin(margin),
             juce::GridItem(midiTimeFormat).withMargin(margin),
+
             juce::GridItem(rootDataDirLabel).withMargin(margin),
             juce::GridItem(rootDataDir).withMargin(margin),
+
             juce::GridItem(resetButton).withMargin(Margin(5, 10, 5, 20)),
             juce::GridItem(okButton).withMargin(Margin(5, 20, 5, 10)),
         };
@@ -192,6 +206,7 @@ public:
     {
         if (button == &okButton)
         {
+            state.setPanelHeigthRatio(panelHeigthRatio.getValue());
             state.setMinSilenceMs(int(minSilence.getValue() * 1000.0f));
             state.setMinDurationMs(int(minDuration.getValue() * 1000.0f));
             state.setMinNoOfNotes(int(minNoOfNotes.getValue()));
@@ -211,6 +226,7 @@ public:
 
     void reloadSettings()
     {
+        panelHeigthRatio.setValue(state.getPanelHeightRatio());
         minSilence.setValue(state.getMinSilenceMs() / 1000.0f);
         minDuration.setValue(state.getMinDurationMs() / 1000.0f);
         minNoOfNotes.setValue(state.getMinNoOfNotes());
@@ -222,6 +238,9 @@ public:
 
 private:
     State &state;
+
+    juce::Slider panelHeigthRatio{"PanelHeigthRatio"};
+    juce::Label panelHeigthRatioLabel{"PanelHeigthRatioLabel", "Panel heigth ratio:"};
 
     juce::Slider minSilence{"MinSilence"};
     juce::Label minSilenceLabel{"MinSilenceLabel", "Minimum silence:"};
