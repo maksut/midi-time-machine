@@ -1,5 +1,7 @@
 #include "Playback.h"
 
+Playback::Playback() {}
+
 double Playback::play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, double millisPerSample)
 {
     if (!isReadyToPlay())
@@ -38,8 +40,7 @@ bool Playback::playOneTrack(
     {
         auto &message = sourceTrack->getEventPointer(nextMessageIndex)->message;
 
-        // During playback, ignore the initial silence
-        double messageTimeDiff = message.getTimeStamp() - initialSilenceSeconds - playheadTimeSeconds;
+        double messageTimeDiff = message.getTimeStamp() - playheadTimeSeconds;
         int messageSampleNumber = juce::roundToInt(messageTimeDiff / bufferTimeSeconds * numOfSamplesInBuffer);
 
         if (messageSampleNumber < numOfSamplesInBuffer)
@@ -86,37 +87,21 @@ double Playback::getTrackStart(const juce::MidiMessageSequence *track)
     return -1;
 }
 
-double Playback::getInitialSilenceSeconds(const juce::MidiFile &midiFile)
-{
-    int numTracks = midiFile.getNumTracks();
-
-    if (numTracks == 0)
-        return 0.0f;
-
-    double silenceSeconds = std::numeric_limits<double>::max();
-
-    for (int trackIndex = 0; trackIndex < numTracks; ++trackIndex)
-    {
-        double trackStartTime = getTrackStart(midiFile.getTrack(trackIndex));
-
-        if (trackStartTime >= 0)
-            silenceSeconds = juce::jmin(silenceSeconds, trackStartTime);
-    }
-
-    return silenceSeconds == std::numeric_limits<double>::max() ? 0 : silenceSeconds;
-}
-
-void Playback::start(const juce::MidiFile &sourceMidiFile)
+void Playback::start(const juce::MidiFile &sourceMidiFile, double startPlayheadPos)
 {
     midiFile = juce::MidiFile(sourceMidiFile); // clones the midi file
-    playheadTimeSeconds = 0;
     nextMessageIndexes = std::make_unique<int[]>(midiFile.getNumTracks());
 
     // Make sure the timestamps of the events are in seconds
     midiFile.convertTimestampTicksToSeconds();
 
-    // Then calculate the initial silence
-    initialSilenceSeconds = getInitialSilenceSeconds(midiFile);
+    double midiDurationSec = 0.0f;
+
+    // Calculate duration and set the playhead time seconds
+    for (int trackIndex = 0; trackIndex < midiFile.getNumTracks(); ++trackIndex)
+        midiDurationSec = juce::jmax(midiDurationSec, midiFile.getTrack(trackIndex)->getEndTime());
+
+    playheadTimeSeconds = midiDurationSec * startPlayheadPos;
 }
 
 void Playback::stop(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer)

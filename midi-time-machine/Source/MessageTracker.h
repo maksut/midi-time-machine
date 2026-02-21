@@ -5,6 +5,8 @@
 class MessageTracker
 {
 public:
+    MessageTracker() {}
+
     void track(const juce::MidiMessage &message)
     {
         // Keep track of current note ons and sustain
@@ -108,4 +110,6 @@ private:
     int currentSustain[16] = {};
     int numTotalNoteOns = 0;
     int numActiveNoteOns = 0;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MessageTracker)
 };

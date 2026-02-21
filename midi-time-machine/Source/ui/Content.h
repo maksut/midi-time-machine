@@ -19,8 +19,8 @@ public:
         midiFileName.setAlpha(0.5);
         resetMidiFileName();
 
-        addAndMakeVisible(midiFileName);
         addAndMakeVisible(midiRoll);
+        addAndMakeVisible(midiFileName);
 
         addAndMakeVisible(keyboard);
 
@@ -65,15 +65,6 @@ public:
 
         g.setColour(juce::Colours::white);
         g.setFont(juce::FontOptions(15.0f));
-
-        /*
-        auto bounds = getTopLevelComponent()->getLocalBounds();
-
-        juce::String text;
-        text << "Window size: " << bounds.getWidth() << "x" << bounds.getHeight();
-
-        g.drawFittedText(text, getLocalBounds(), juce::Justification::centred, 1);
-        */
     }
 
     void resized() override
@@ -148,4 +139,6 @@ private:
     float panelHeigthRatio = 0.5;
 
     juce::Label midiFileName{"MidiFileName", ""};
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Content)
 };

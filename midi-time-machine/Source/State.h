@@ -228,7 +228,7 @@ public:
         return state.getProperty(startMarkerPositionId);
     }
 
-    void setStartMakerPosition(double startMakerPosition)
+    void setStartMarkerPosition(double startMakerPosition)
     {
         state.setProperty(startMarkerPositionId, startMakerPosition, nullptr);
     }

@@ -12,8 +12,8 @@ class Toolbar : public juce::Component,
                 public juce::ValueTree::Listener
 {
 public:
-    Toolbar(Processor &processor, Store &store, MidiRoll &midiToolbarPreview, MidiRoll &midiZoomedPreview)
-        : processor(processor), state(processor.getState()), store(store), midiToolbarPreview(midiToolbarPreview), midiZoomedPreview(midiZoomedPreview)
+    Toolbar(Processor &processor, Store &store, MidiPreview &midiPreview, MidiRoll &midiRoll)
+        : processor(processor), state(processor.getState()), store(store), midiPreview(midiPreview), midiRoll(midiRoll)
     {
         state.addListener(this);
 
@@ -47,7 +47,7 @@ public:
         addAndMakeVisible(playButton);
         addAndMakeVisible(openButton);
         addAndMakeVisible(settingsButton);
-        addAndMakeVisible(midiToolbarPreview);
+        addAndMakeVisible(midiPreview);
     }
 
     ~Toolbar() override
@@ -81,7 +81,7 @@ public:
         fb.items = {
             juce::FlexItem(playButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
 
-            juce::FlexItem(midiToolbarPreview).withMargin(5).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(midiPreview).withMargin(5).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
 
             juce::FlexItem(openButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
             juce::FlexItem(settingsButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
@@ -154,12 +154,12 @@ private:
 
             if (midiFile.readFrom(fileStream))
             {
-                midiZoomedPreview.load(midiFile);
-                midiToolbarPreview.load(midiFile);
+                midiRoll.load(midiFile);
+                midiPreview.load(midiFile);
             }
             else
             {
-                showWarning(juce::String("Failed to load file:\n") + selectedFile->getFileName());
+                showWarning("Loading midi file...", juce::String("Failed to load file:\n") + selectedFile->getFileName());
             }
         }
 
@@ -187,12 +187,12 @@ private:
             });
     }
 
-    void showWarning(const juce::String &message)
+    void showWarning(const juce::String &title, const juce::String &message)
     {
         messageBox = juce::AlertWindow::showScopedAsync(
             juce::MessageBoxOptions()
                 .withIconType(juce::MessageBoxIconType::WarningIcon)
-                .withTitle("Export midi file...")
+                .withTitle(title)
                 .withMessage(message)
                 .withButton("OK"),
             nullptr);
@@ -209,6 +209,8 @@ private:
     Processor &processor;
     State &state;
     Store &store;
-    MidiRoll &midiToolbarPreview;
-    MidiRoll &midiZoomedPreview;
+    MidiPreview &midiPreview;
+    MidiRoll &midiRoll;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Toolbar)
 };

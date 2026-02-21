@@ -6,6 +6,8 @@
 class Playback
 {
 public:
+    Playback();
+
     /**
      * Puts zero-or-more midi messages from the playback midi sequence to the midiMessages buffer.
      * This is called in the audio thread!
@@ -27,7 +29,7 @@ public:
     /**
      * Should not be called in audio thread
      */
-    void start(const juce::MidiFile &sourceMidiFile);
+    void start(const juce::MidiFile &sourceMidiFile, double startPlayheadPos);
 
 private:
     bool playOneTrack(
@@ -42,12 +44,12 @@ private:
     void reset();
 
     static double getTrackStart(const juce::MidiMessageSequence *track);
-    static double getInitialSilenceSeconds(const juce::MidiFile &sourceMidiFile);
 
 private:
     juce::MidiFile midiFile;
     double playheadTimeSeconds = -1;
-    double initialSilenceSeconds = 0;
     std::unique_ptr<int[]> nextMessageIndexes = nullptr;
     MessageTracker activeNotes;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Playback)
 };

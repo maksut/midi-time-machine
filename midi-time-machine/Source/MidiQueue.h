@@ -11,6 +11,8 @@ struct WrappedMessage
 class MidiQueue
 {
 public:
+    MidiQueue() {}
+
     void push(const juce::MidiMessage &message, bool isPlayback)
     {
         fifo.write(1)
@@ -40,4 +42,6 @@ private:
     static constexpr auto queueSize = 1 << 14;
     juce::AbstractFifo fifo{queueSize};
     std::vector<WrappedMessage> messages = std::vector<WrappedMessage>(queueSize);
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiQueue)
 };

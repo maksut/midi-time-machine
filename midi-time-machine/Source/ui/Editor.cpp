@@ -5,8 +5,8 @@ Editor::Editor(Processor &processor, Store &midiStore)
       processor(processor),
       state(processor.getState()),
       store(midiStore),
-      midiRoll(state, store, 2),
-      midiPreview(state, store),
+      midiRoll(state, store, 5),
+      midiPreview(state, store, midiRoll),
       toolbar(processor, store, midiPreview, midiRoll),
       content(processor.getState(), store, midiRoll)
 {

@@ -4,7 +4,7 @@
 #include "Playback.h"
 #include "ValueTreeLogger.h"
 
-const int POLL_TIME_MILLIS = 1000;
+const int POLL_TIME_MILLIS = 1000 / 60; // ~ 60Hz
 
 Processor::Processor()
 {
@@ -20,9 +20,6 @@ Processor::Processor()
     // Then the processor modifies related bit of the ValueTree in the state.
     // So other listener can listen for specific changes.
     addChangeListener(this);
-
-    // Start the timer
-    startTimer(POLL_TIME_MILLIS);
 }
 
 Processor::~Processor()
@@ -193,7 +190,7 @@ void Processor::startPlayback(const juce::MidiFile &midiFile)
 {
     juce::ScopedLock lock(playbackLock);
 
-    playbackRequest->start(midiFile);
+    playbackRequest->start(midiFile, state->getStartMarkerPosition());
 }
 
 void Processor::stopPlayback()
@@ -204,7 +201,7 @@ void Processor::stopPlayback()
     // So the processor will do its usual swapping of currentlyPlaying & playbackRequest.
     // Slightly hacky but simplifies the state management of these requests.
     juce::MidiFile emptyMidiFile;
-    playbackRequest->start(emptyMidiFile);
+    playbackRequest->start(emptyMidiFile, 0.0f);
 }
 
 bool Processor::hasEditor() const
@@ -243,7 +240,15 @@ void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
         return;
 
     store->drainProcessorMidiQueue();
-    state->setPlaybackTimeSec(playbackTimeSec.get());
+
+    double playbackTime = playbackTimeSec.get();
+    state->setPlaybackTimeSec(playbackTime);
+
+    // Only run the timer during playback to save tiny bit of processing
+    if (playbackTime >= 0)
+        startTimer(POLL_TIME_MILLIS);
+    else
+        stopTimer();
 }
 
 State &Processor::getState()
