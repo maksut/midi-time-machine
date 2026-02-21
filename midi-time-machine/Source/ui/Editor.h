@@ -19,6 +19,8 @@ public:
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override;
 
 private:
+    juce::OpenGLContext openGLContext;
+
     Processor &processor;
     State &state;
     Store &store;

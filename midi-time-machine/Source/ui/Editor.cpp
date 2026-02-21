@@ -10,6 +10,8 @@ Editor::Editor(Processor &processor, Store &midiStore)
       toolbar(processor, store, midiPreview, midiRoll),
       content(processor.getState(), store, midiRoll)
 {
+    openGLContext.attachTo(*this);
+
     addAndMakeVisible(toolbar);
     addAndMakeVisible(content);
 
