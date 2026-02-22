@@ -7,8 +7,11 @@
 #include "Keyboard.h"
 #include "MidiRoll.h"
 
+const int RECORDING_BLINK_TIMER = 500;
+
 class Content : public juce::Component,
-                public juce::ValueTree::Listener
+                public juce::ValueTree::Listener,
+                public juce::Timer
 {
 public:
     Content(State &state, Store &store, MidiRoll &midiRoll) : state(state), store(store), settings(state), keyboard(store), midiRoll(midiRoll)
@@ -18,6 +21,8 @@ public:
         midiFileName.setFont(midiFileName.getFont().withHeight(18));
         midiFileName.setAlpha(0.5);
         resetMidiFileName();
+
+        resetIsRecordingInProgress();
 
         addAndMakeVisible(midiRoll);
         addAndMakeVisible(midiFileName);
@@ -57,6 +62,17 @@ public:
             resized();
             repaint();
         }
+        else if (state.isRecordingInProgressChange(tree, property))
+        {
+            resetIsRecordingInProgress();
+            repaint();
+        }
+    }
+
+    void timerCallback() override
+    {
+        displayRecordingDot = !displayRecordingDot;
+        repaint();
     }
 
     void paint(juce::Graphics &g) override
@@ -65,6 +81,16 @@ public:
 
         g.setColour(juce::Colours::white);
         g.setFont(juce::FontOptions(15.0f));
+
+        if (displayRecordingDot)
+        {
+            g.setColour(juce::Colours::red);
+
+            juce::Rectangle<int> bounds = getLocalBounds();
+            float size = bounds.getWidth() / 40.0f;
+            juce::Rectangle<float> rect(size, size, size, size);
+            g.fillEllipse(rect);
+        }
     }
 
     void resized() override
@@ -130,13 +156,29 @@ private:
         midiFileName.setText(filename, juce::dontSendNotification);
     }
 
+    void resetIsRecordingInProgress()
+    {
+        if (state.isRecordingInProgress())
+        {
+            startTimer(RECORDING_BLINK_TIMER);
+            displayRecordingDot = true;
+        }
+        else
+        {
+            stopTimer();
+            displayRecordingDot = false;
+        }
+    }
+
 private:
     State &state;
     Store &store;
     MidiRoll &midiRoll;
     Settings settings;
     Keyboard keyboard;
+
     float panelHeigthRatio = 0.5;
+    bool displayRecordingDot = false;
 
     juce::Label midiFileName{"MidiFileName", ""};
 

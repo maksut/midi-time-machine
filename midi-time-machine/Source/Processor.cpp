@@ -4,7 +4,7 @@
 #include "Playback.h"
 #include "ValueTreeLogger.h"
 
-const int POLL_TIME_MILLIS = 1000 / 120; // ~ 60Hz
+const int POLL_TIME_MILLIS = 1000 / 60; // ~ 60Hz
 
 Processor::Processor()
 {
