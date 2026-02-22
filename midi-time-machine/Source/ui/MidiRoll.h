@@ -195,7 +195,46 @@ public:
         repaint();
     }
 
+    void mouseDown(const juce::MouseEvent &) override
+    {
+        isDragging = false;
+    }
+
+    void mouseDrag(const juce::MouseEvent &e) override
+    {
+        if (e.getDistanceFromDragStart() < 8 || isDragging)
+            return;
+
+        juce::File midiFile(state.getSelectedMidiFile().trim());
+
+        if (!midiFile.existsAsFile())
+            return;
+
+        isDragging = true;
+
+        tempMidiFile.reset(new juce::TemporaryFile(".mid"));
+
+        if (!midiFile.copyFileTo(tempMidiFile->getFile()))
+        {
+            tempMidiFile.reset();
+
+            return;
+        }
+
+        juce::StringArray filesToDrag;
+        filesToDrag.add(tempMidiFile->getFile().getFullPathName());
+
+        juce::DragAndDropContainer::performExternalDragDropOfFiles(filesToDrag, true);
+    }
+
+    void mouseUp(const juce::MouseEvent &) override
+    {
+        isDragging = false;
+    }
+
 private:
+    std::unique_ptr<juce::TemporaryFile> tempMidiFile;
+    bool isDragging = false;
     int windowSizeSec = -1.0f;
     double startMarkerPos = 0.0f;
     bool startMarkerMoving = false;
