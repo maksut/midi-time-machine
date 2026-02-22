@@ -26,7 +26,7 @@ public:
         }
     }
 
-    void load(juce::MidiFile &midiFileArg)
+    virtual void load(juce::MidiFile &midiFileArg)
     {
         // Reset state
         unload();
@@ -271,6 +271,15 @@ public:
 
         startMarker.onChange = [this](int x, bool isMoving)
         { startMarkerMoved(x, isMoving); };
+    }
+
+    void load(juce::MidiFile &midiFileArg) override
+    {
+        MidiRollBase::load(midiFileArg);
+
+        // Reset the start marker
+        state.setStartMarkerPosition(0.0f);
+        resized();
     }
 
     void paint(juce::Graphics &g) override

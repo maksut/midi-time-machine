@@ -43,8 +43,6 @@ private:
      */
     void reset();
 
-    static double getTrackStart(const juce::MidiMessageSequence *track);
-
 private:
     juce::MidiFile midiFile;
     double playheadTimeSeconds = -1;

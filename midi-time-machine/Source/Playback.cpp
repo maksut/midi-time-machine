@@ -68,29 +68,9 @@ bool Playback::playOneTrack(
     return (nextMessageIndex >= numEvents); // Is this tracked played completely?
 }
 
-/**
- * Similar to MidiMessageSequence::getStartTime() but ignores meta events.
- * Returns -1 if there is no regular events in the sequence.
- */
-double Playback::getTrackStart(const juce::MidiMessageSequence *track)
-{
-    int numEvents = track->getNumEvents();
-
-    for (int messageIndex = 0; messageIndex < numEvents; ++messageIndex)
-    {
-        auto &message = track->getEventPointer(messageIndex)->message;
-
-        if (!message.isMetaEvent()) // ignoring meta events
-            return message.getTimeStamp();
-    }
-
-    return -1;
-}
-
 void Playback::start(const juce::MidiFile &sourceMidiFile, double startPlayheadPos)
 {
     midiFile = juce::MidiFile(sourceMidiFile); // clones the midi file
-    nextMessageIndexes = std::make_unique<int[]>(midiFile.getNumTracks());
 
     // Make sure the timestamps of the events are in seconds
     midiFile.convertTimestampTicksToSeconds();
@@ -102,6 +82,25 @@ void Playback::start(const juce::MidiFile &sourceMidiFile, double startPlayheadP
         midiDurationSec = juce::jmax(midiDurationSec, midiFile.getTrack(trackIndex)->getEndTime());
 
     playheadTimeSeconds = midiDurationSec * startPlayheadPos;
+
+    // Initialise nextMessage indexes by dropping messages before the playheadTimeSeconds
+    nextMessageIndexes = std::make_unique<int[]>(midiFile.getNumTracks());
+
+    for (int trackIndex = 0; trackIndex < midiFile.getNumTracks(); ++trackIndex)
+    {
+        const juce::MidiMessageSequence *track = midiFile.getTrack(trackIndex);
+        int numEvents = track->getNumEvents();
+
+        for (int messageIndex = 0; messageIndex < numEvents; ++messageIndex)
+        {
+            juce::MidiMessage &message = track->getEventPointer(messageIndex)->message;
+
+            if (message.getTimeStamp() >= playheadTimeSeconds)
+                break;
+            else
+                ++nextMessageIndexes[trackIndex];
+        }
+    }
 }
 
 void Playback::stop(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer)
