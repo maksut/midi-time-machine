@@ -52,16 +52,16 @@ private:
     void flushAndReset();
     bool isHostPlaying();
 
-    MidiQueue queue;
-    std::unique_ptr<State> state;
-    std::unique_ptr<ValueTreeLogger> valueTreeLogger;
-    std::unique_ptr<Store> store;
-    juce::int64 sampleCount = 0;
+    MidiQueue mQueue;
+    std::unique_ptr<State> mState;
+    std::unique_ptr<ValueTreeLogger> mValueTreeLogger;
+    std::unique_ptr<Store> mStore;
+    juce::int64 mSampleCount = 0;
 
-    juce::CriticalSection playbackLock;
-    std::unique_ptr<Playback> playbackRequest;
-    std::unique_ptr<Playback> currentlyPlaying;
-    juce::Atomic<double> playbackTimeSec = -1.0f;
+    juce::CriticalSection mPlaybackLock;
+    std::unique_ptr<Playback> mPlaybackRequest;
+    std::unique_ptr<Playback> mCurrentlyPlaying;
+    juce::Atomic<double> mPlaybackTimeSec = -1.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
 };

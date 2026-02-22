@@ -19,17 +19,16 @@ public:
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override;
 
 private:
-    juce::OpenGLContext openGLContext;
+    juce::OpenGLContext mOpenGLContext;
 
-    Processor &processor;
-    State &state;
-    Store &store;
-    juce::TextButton openDataFolderButton;
+    State &mState;
+    Store &mStore;
+    juce::TextButton mOpenDataFolderButton;
 
-    MidiRoll midiRoll;
-    MidiPreview midiPreview;
-    Toolbar toolbar;
-    Content content;
+    MidiRoll mMidiRoll;
+    MidiPreview mMidiPreview;
+    Toolbar mToolbar;
+    Content mContent;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Editor)
 };

@@ -9,38 +9,38 @@ class VelocityLines : public juce::Component,
 {
 public:
     VelocityLines(Store &store, juce::MidiKeyboardComponent &keyboardComponent)
-        : recordingTracker(store.getRecordingTracker()),
-          playbackTracker(store.getPlaybackTracker()),
-          keyboardState(store.getKeyboardState()),
-          keyboardComponent(keyboardComponent)
+        : mRecordingTracker(store.getRecordingTracker()),
+          mPlaybackTracker(store.getPlaybackTracker()),
+          mKeyboardState(store.getKeyboardState()),
+          mKeyboardComponent(keyboardComponent)
     {
-        keyboardState.addListener(this);
+        mKeyboardState.addListener(this);
         keyboardComponent.addChangeListener(this);
     }
 
     ~VelocityLines() override
     {
-        keyboardState.removeListener(this);
-        keyboardComponent.removeChangeListener(this);
+        mKeyboardState.removeListener(this);
+        mKeyboardComponent.removeChangeListener(this);
     }
 
     void paint(juce::Graphics &g) override
     {
-        int rangeStart = keyboardComponent.getRangeStart();
-        int rangeEnd = keyboardComponent.getRangeEnd();
-        float keyWidth = keyboardComponent.getKeyWidth();
+        int rangeStart = mKeyboardComponent.getRangeStart();
+        int rangeEnd = mKeyboardComponent.getRangeEnd();
+        float keyWidth = mKeyboardComponent.getKeyWidth();
         float lineWidth = keyWidth * 0.50f;
 
         for (int n = rangeStart; n <= rangeEnd; ++n)
         {
-            float velocity = juce::jmax(recordingTracker.getNoteVelocity(n), playbackTracker.getNoteVelocity(n));
+            float velocity = juce::jmax(mRecordingTracker.getNoteVelocity(n), mPlaybackTracker.getNoteVelocity(n));
 
             if (velocity > 0.0f)
             {
-                juce::Rectangle<float> rect = keyboardComponent.getRectangleForKey(n);
+                juce::Rectangle<float> rect = mKeyboardComponent.getRectangleForKey(n);
 
                 // Convert keyboard relative coordinates to this component's coordinates
-                juce::Point<float> pos = getLocalPoint(&keyboardComponent, rect.getCentre());
+                juce::Point<float> pos = getLocalPoint(&mKeyboardComponent, rect.getCentre());
 
                 float lineMaxHeight = (float)getHeight();
                 float lineHeight = velocity * lineMaxHeight;
@@ -59,10 +59,10 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster *) override { repaint(); }
 
 private:
-    MessageTracker &recordingTracker;
-    MessageTracker &playbackTracker;
-    juce::MidiKeyboardState &keyboardState;
-    juce::MidiKeyboardComponent &keyboardComponent;
+    MessageTracker &mRecordingTracker;
+    MessageTracker &mPlaybackTracker;
+    juce::MidiKeyboardState &mKeyboardState;
+    juce::MidiKeyboardComponent &mKeyboardComponent;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VelocityLines)
 };

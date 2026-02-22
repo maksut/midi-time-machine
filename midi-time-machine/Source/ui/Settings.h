@@ -6,15 +6,15 @@
 class RootDataDirInput : public juce::Component, public juce::Button::Listener
 {
 public:
-    RootDataDirInput(State &state) : state(state)
+    RootDataDirInput(State &state) : mState(state)
     {
         auto open = Resources::getIconDrawable(Icon::Folder, juce::Colours::yellow, 0.1f);
-        selectDirButton.setTooltip("Select root directory");
-        selectDirButton.setImages(open.get());
-        selectDirButton.addListener(this);
+        mSelectDirButton.setTooltip("Select root directory");
+        mSelectDirButton.setImages(open.get());
+        mSelectDirButton.addListener(this);
 
-        addAndMakeVisible(rootDataDir);
-        addAndMakeVisible(selectDirButton);
+        addAndMakeVisible(mRootDataDir);
+        addAndMakeVisible(mSelectDirButton);
     }
 
     void resized() override
@@ -24,8 +24,8 @@ public:
         auto stretchSelf = juce::FlexItem::AlignSelf::stretch;
 
         fb.items = {
-            juce::FlexItem(rootDataDir).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
-            juce::FlexItem(selectDirButton).withFlex(2.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(mRootDataDir).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(mSelectDirButton).withFlex(2.0f, 0.0f).withAlignSelf(stretchSelf),
         };
 
         fb.performLayout(getLocalBounds());
@@ -33,12 +33,12 @@ public:
 
     void buttonClicked(juce::Button *button) override
     {
-        if (button == &selectDirButton)
+        if (button == &mSelectDirButton)
         {
             bool useNativeVersion = true;
-            fileChooser.reset(new juce::FileChooser("Choose a directory to store MIDI files", state.getRootDataDir(), "*", useNativeVersion));
+            mFileChooser.reset(new juce::FileChooser("Choose a directory to store MIDI files", mState.getRootDataDir(), "*", useNativeVersion));
 
-            fileChooser->launchAsync(
+            mFileChooser->launchAsync(
                 juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories,
                 [this](const juce::FileChooser &chooser)
                 {
@@ -49,12 +49,12 @@ public:
 
     juce::String getSelectedRootDataDir()
     {
-        return rootDataDir.getText();
+        return mRootDataDir.getText();
     }
 
     void reloadSettings()
     {
-        rootDataDir.setText(state.getRootDataDir());
+        mRootDataDir.setText(mState.getRootDataDir());
     }
 
 private:
@@ -73,9 +73,9 @@ private:
 
         if (!newRootDataDir.isEmpty())
         {
-            rootDataDir.setText(newRootDataDir);
+            mRootDataDir.setText(newRootDataDir);
 
-            messageBox = juce::AlertWindow::showScopedAsync(
+            mMessageBox = juce::AlertWindow::showScopedAsync(
                 juce::MessageBoxOptions()
                     .withIconType(juce::MessageBoxIconType::InfoIcon)
                     .withTitle("Directory chosen")
@@ -85,7 +85,7 @@ private:
         }
         else
         {
-            messageBox = juce::AlertWindow::showScopedAsync(
+            mMessageBox = juce::AlertWindow::showScopedAsync(
                 juce::MessageBoxOptions()
                     .withIconType(juce::MessageBoxIconType::InfoIcon)
                     .withTitle("The directory is invalid")
@@ -96,61 +96,61 @@ private:
     }
 
 private:
-    State &state;
-    std::unique_ptr<juce::FileChooser> fileChooser;
-    juce::ScopedMessageBox messageBox;
-    juce::DrawableButton selectDirButton{"Select", juce::DrawableButton::ImageOnButtonBackground};
-    juce::TextEditor rootDataDir{"RootDataDir"};
+    State &mState;
+    std::unique_ptr<juce::FileChooser> mFileChooser;
+    juce::ScopedMessageBox mMessageBox;
+    juce::DrawableButton mSelectDirButton{"Select", juce::DrawableButton::ImageOnButtonBackground};
+    juce::TextEditor mRootDataDir{"RootDataDir"};
 };
 
 class Settings : public juce::Component, public juce::Button::Listener
 {
 public:
-    Settings(State &state) : state(state), rootDataDir(state)
+    Settings(State &state) : mState(state), mRootDataDir(state)
     {
-        panelHeigthRatio.setRange(0, 1, 0.01);
+        mPanelHeigthRatio.setRange(0, 1, 0.01);
 
-        minSilence.setRange(1, 30, 0.2);
-        minSilence.setTextValueSuffix(" sec");
+        mMinSilence.setRange(1, 30, 0.2);
+        mMinSilence.setTextValueSuffix(" sec");
 
-        minDuration.setRange(1, 30, 0.2);
-        minDuration.setTextValueSuffix(" sec");
+        mMinDuration.setRange(1, 30, 0.2);
+        mMinDuration.setTextValueSuffix(" sec");
 
-        minNoOfNotes.setRange(1, 100, 1);
-        minNoOfNotes.setTextValueSuffix(" notes");
+        mMinNoOfNotes.setRange(1, 100, 1);
+        mMinNoOfNotes.setTextValueSuffix(" notes");
 
-        minSilenceMultipler.setRange(1, 10, 1);
-        minSilenceMultipler.setTextValueSuffix("x");
+        mMinSilenceMultipler.setRange(1, 10, 1);
+        mMinSilenceMultipler.setTextValueSuffix("x");
 
-        preDelay.setRange(0.0, 3000.0, 1.0);
-        preDelay.setTextValueSuffix(" ms");
+        mPreDelay.setRange(0.0, 3000.0, 1.0);
+        mPreDelay.setTextValueSuffix(" ms");
 
-        midiTimeFormat.addItem("TPQ", 1);
-        midiTimeFormat.addItem("SMPTE", 2);
+        mMidiTimeFormat.addItem("TPQ", 1);
+        mMidiTimeFormat.addItem("SMPTE", 2);
 
         reloadSettings();
 
-        okButton.addListener(this);
-        resetButton.addListener(this);
+        mOkButton.addListener(this);
+        mResetButton.addListener(this);
 
-        addAndMakeVisible(panelHeigthRatio);
-        addAndMakeVisible(panelHeigthRatioLabel);
-        addAndMakeVisible(minSilence);
-        addAndMakeVisible(minSilenceLabel);
-        addAndMakeVisible(minDuration);
-        addAndMakeVisible(minDurationLabel);
-        addAndMakeVisible(minNoOfNotes);
-        addAndMakeVisible(minNoOfNotesLabel);
-        addAndMakeVisible(minSilenceMultipler);
-        addAndMakeVisible(minSilenceMultiplerLabel);
-        addAndMakeVisible(preDelay);
-        addAndMakeVisible(preDelayLabel);
-        addAndMakeVisible(midiTimeFormat);
-        addAndMakeVisible(midiTimeFormatLabel);
-        addAndMakeVisible(rootDataDir);
-        addAndMakeVisible(rootDataDirLabel);
-        addAndMakeVisible(okButton);
-        addAndMakeVisible(resetButton);
+        addAndMakeVisible(mPanelHeigthRatio);
+        addAndMakeVisible(mPanelHeigthRatioLabel);
+        addAndMakeVisible(mMinSilence);
+        addAndMakeVisible(mMinSilenceLabel);
+        addAndMakeVisible(mMinDuration);
+        addAndMakeVisible(mMinDurationLabel);
+        addAndMakeVisible(mMinNoOfNotes);
+        addAndMakeVisible(mMinNoOfNotesLabel);
+        addAndMakeVisible(mMinSilenceMultipler);
+        addAndMakeVisible(mMinSilenceMultiplerLabel);
+        addAndMakeVisible(mPreDelay);
+        addAndMakeVisible(mPreDelayLabel);
+        addAndMakeVisible(mMidiTimeFormat);
+        addAndMakeVisible(mMidiTimeFormatLabel);
+        addAndMakeVisible(mRootDataDir);
+        addAndMakeVisible(mRootDataDirLabel);
+        addAndMakeVisible(mOkButton);
+        addAndMakeVisible(mResetButton);
     }
 
     void paint(juce::Graphics &g) override
@@ -163,7 +163,6 @@ public:
         juce::Grid grid;
         using Track = juce::Grid::TrackInfo;
         using Fr = juce::Grid::Fr;
-        using Px = juce::Grid::Px;
         using Margin = juce::GridItem::Margin;
 
         auto margin = Margin(4, 0, 4, 0);
@@ -171,32 +170,32 @@ public:
         grid.templateRows = {Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1)), Track(Fr(1))};
         grid.templateColumns = {Track(Fr(1)), Track(Fr(1))};
         grid.items = {
-            juce::GridItem(panelHeigthRatioLabel).withMargin(margin),
-            juce::GridItem(panelHeigthRatio).withMargin(margin),
+            juce::GridItem(mPanelHeigthRatioLabel).withMargin(margin),
+            juce::GridItem(mPanelHeigthRatio).withMargin(margin),
 
-            juce::GridItem(minSilenceLabel).withMargin(margin),
-            juce::GridItem(minSilence).withMargin(margin),
+            juce::GridItem(mMinSilenceLabel).withMargin(margin),
+            juce::GridItem(mMinSilence).withMargin(margin),
 
-            juce::GridItem(minDurationLabel).withMargin(margin),
-            juce::GridItem(minDuration).withMargin(margin),
+            juce::GridItem(mMinDurationLabel).withMargin(margin),
+            juce::GridItem(mMinDuration).withMargin(margin),
 
-            juce::GridItem(minNoOfNotesLabel).withMargin(margin),
-            juce::GridItem(minNoOfNotes).withMargin(margin),
+            juce::GridItem(mMinNoOfNotesLabel).withMargin(margin),
+            juce::GridItem(mMinNoOfNotes).withMargin(margin),
 
-            juce::GridItem(minSilenceMultiplerLabel).withMargin(margin),
-            juce::GridItem(minSilenceMultipler).withMargin(margin),
+            juce::GridItem(mMinSilenceMultiplerLabel).withMargin(margin),
+            juce::GridItem(mMinSilenceMultipler).withMargin(margin),
 
-            juce::GridItem(preDelayLabel).withMargin(margin),
-            juce::GridItem(preDelay).withMargin(margin),
+            juce::GridItem(mPreDelayLabel).withMargin(margin),
+            juce::GridItem(mPreDelay).withMargin(margin),
 
-            juce::GridItem(midiTimeFormatLabel).withMargin(margin),
-            juce::GridItem(midiTimeFormat).withMargin(margin),
+            juce::GridItem(mMidiTimeFormatLabel).withMargin(margin),
+            juce::GridItem(mMidiTimeFormat).withMargin(margin),
 
-            juce::GridItem(rootDataDirLabel).withMargin(margin),
-            juce::GridItem(rootDataDir).withMargin(margin),
+            juce::GridItem(mRootDataDirLabel).withMargin(margin),
+            juce::GridItem(mRootDataDir).withMargin(margin),
 
-            juce::GridItem(resetButton).withMargin(Margin(5, 10, 5, 20)),
-            juce::GridItem(okButton).withMargin(Margin(5, 20, 5, 10)),
+            juce::GridItem(mResetButton).withMargin(Margin(5, 10, 5, 20)),
+            juce::GridItem(mOkButton).withMargin(Margin(5, 20, 5, 10)),
         };
 
         grid.performLayout(getLocalBounds());
@@ -204,67 +203,67 @@ public:
 
     void buttonClicked(juce::Button *button) override
     {
-        if (button == &okButton)
+        if (button == &mOkButton)
         {
-            state.setPanelHeigthRatio(panelHeigthRatio.getValue());
-            state.setMinSilenceMs(int(minSilence.getValue() * 1000.0f));
-            state.setMinDurationMs(int(minDuration.getValue() * 1000.0f));
-            state.setMinNoOfNotes(int(minNoOfNotes.getValue()));
-            state.setMinSilenceMultiplier(int(minSilenceMultipler.getValue()));
-            state.setPredelayMs(int(preDelay.getValue()));
-            state.setMidiTimeFormat(midiTimeFormat.getSelectedId() == 1 ? "TPQ" : "SMPTE");
-            state.setRootDataDir(rootDataDir.getSelectedRootDataDir());
+            mState.setPanelHeigthRatio(mPanelHeigthRatio.getValue());
+            mState.setMinSilenceMs(int(mMinSilence.getValue() * 1000.0f));
+            mState.setMinDurationMs(int(mMinDuration.getValue() * 1000.0f));
+            mState.setMinNoOfNotes(int(mMinNoOfNotes.getValue()));
+            mState.setMinSilenceMultiplier(int(mMinSilenceMultipler.getValue()));
+            mState.setPredelayMs(int(mPreDelay.getValue()));
+            mState.setMidiTimeFormat(mMidiTimeFormat.getSelectedId() == 1 ? "TPQ" : "SMPTE");
+            mState.setRootDataDir(mRootDataDir.getSelectedRootDataDir());
 
-            state.setSettinsOpen(false);
+            mState.setSettinsOpen(false);
         }
-        else if (button == &resetButton)
+        else if (button == &mResetButton)
         {
-            state.resetSettings();
+            mState.resetSettings();
             reloadSettings();
         }
     }
 
     void reloadSettings()
     {
-        panelHeigthRatio.setValue(state.getPanelHeightRatio());
-        minSilence.setValue(state.getMinSilenceMs() / 1000.0f);
-        minDuration.setValue(state.getMinDurationMs() / 1000.0f);
-        minNoOfNotes.setValue(state.getMinNoOfNotes());
-        minSilenceMultipler.setValue(state.getMinSilenceMultiplier());
-        preDelay.setValue(state.getPredelayMs(), juce::NotificationType::dontSendNotification);
-        midiTimeFormat.setSelectedId(state.getMidiTimeFormat() == "TPQ" ? 1 : 2);
-        rootDataDir.reloadSettings();
+        mPanelHeigthRatio.setValue(mState.getPanelHeightRatio());
+        mMinSilence.setValue(mState.getMinSilenceMs() / 1000.0f);
+        mMinDuration.setValue(mState.getMinDurationMs() / 1000.0f);
+        mMinNoOfNotes.setValue(mState.getMinNoOfNotes());
+        mMinSilenceMultipler.setValue(mState.getMinSilenceMultiplier());
+        mPreDelay.setValue(mState.getPredelayMs(), juce::NotificationType::dontSendNotification);
+        mMidiTimeFormat.setSelectedId(mState.getMidiTimeFormat() == "TPQ" ? 1 : 2);
+        mRootDataDir.reloadSettings();
     }
 
 private:
-    State &state;
+    State &mState;
 
-    juce::Slider panelHeigthRatio{"PanelHeigthRatio"};
-    juce::Label panelHeigthRatioLabel{"PanelHeigthRatioLabel", "Panel heigth ratio:"};
+    juce::Slider mPanelHeigthRatio{"PanelHeigthRatio"};
+    juce::Label mPanelHeigthRatioLabel{"PanelHeigthRatioLabel", "Panel heigth ratio:"};
 
-    juce::Slider minSilence{"MinSilence"};
-    juce::Label minSilenceLabel{"MinSilenceLabel", "Minimum silence:"};
+    juce::Slider mMinSilence{"MinSilence"};
+    juce::Label mMinSilenceLabel{"MinSilenceLabel", "Minimum silence:"};
 
-    juce::Slider minDuration{"MinDuration"};
-    juce::Label minDurationLabel{"MinDurationLabel", "Minimum duration:"};
+    juce::Slider mMinDuration{"MinDuration"};
+    juce::Label mMinDurationLabel{"MinDurationLabel", "Minimum duration:"};
 
-    juce::Slider minNoOfNotes{"MinNoOfNotes"};
-    juce::Label minNoOfNotesLabel{"MinNoOfNotes", "Minimum no of notes:"};
+    juce::Slider mMinNoOfNotes{"MinNoOfNotes"};
+    juce::Label mMinNoOfNotesLabel{"MinNoOfNotes", "Minimum no of notes:"};
 
-    juce::Slider minSilenceMultipler{"MinSilenceMultiplier"};
-    juce::Label minSilenceMultiplerLabel{"MinSilenceMultiplierLabel", "Minimum silence multiplier:"};
+    juce::Slider mMinSilenceMultipler{"MinSilenceMultiplier"};
+    juce::Label mMinSilenceMultiplerLabel{"MinSilenceMultiplierLabel", "Minimum silence multiplier:"};
 
-    juce::Slider preDelay{"PreDelay"};
-    juce::Label preDelayLabel{"PreDelayLabel", "Pre-delay:"};
+    juce::Slider mPreDelay{"PreDelay"};
+    juce::Label mPreDelayLabel{"PreDelayLabel", "Pre-delay:"};
 
-    juce::ComboBox midiTimeFormat{"MidiTimeFormat"};
-    juce::Label midiTimeFormatLabel{"MidiTimeFormatLabel", "MIDI file time format:"};
+    juce::ComboBox mMidiTimeFormat{"MidiTimeFormat"};
+    juce::Label mMidiTimeFormatLabel{"MidiTimeFormatLabel", "MIDI file time format:"};
 
-    RootDataDirInput rootDataDir;
-    juce::Label rootDataDirLabel{"RootDataDirLabel", "Root data directory:"};
+    RootDataDirInput mRootDataDir;
+    juce::Label mRootDataDirLabel{"RootDataDirLabel", "Root data directory:"};
 
-    juce::TextButton okButton{"OK"};
-    juce::TextButton resetButton{"Reset All"};
+    juce::TextButton mOkButton{"OK"};
+    juce::TextButton mResetButton{"Reset All"};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Settings)
 };

@@ -7,7 +7,7 @@ class RoundedComponent : public juce::Component
 public:
     RoundedComponent()
     {
-        backgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
+        mBackgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
     }
 
     void paintOverChildren(juce::Graphics &g) override
@@ -20,12 +20,12 @@ public:
         corners.addRoundedRectangle(bounds, 6.0f); // subtract the rounded rect
         corners.setUsingNonZeroWinding(false);     // makes it act as XOR / inverse
 
-        g.setColour(backgroundColour);
+        g.setColour(mBackgroundColour);
         g.fillPath(corners);
     }
 
 protected:
-    juce::Colour backgroundColour;
+    juce::Colour mBackgroundColour;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RoundedComponent)

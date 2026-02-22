@@ -8,18 +8,18 @@ class Keyboard : public RoundedComponent
 {
 public:
     Keyboard(Store &store)
-        : midiKeyboard(store.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard),
-          velocityLines(store, midiKeyboard)
+        : mMidiKeyboard(store.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard),
+          mVelocityLines(store, mMidiKeyboard)
     {
-        backgroundColour = juce::Colours::darkgrey;
+        mBackgroundColour = juce::Colours::darkgrey;
 
-        midiKeyboard.setName("MIDI Keyboard");
-        midiKeyboard.setLowestVisibleKey(21 /*A0*/);
-        midiKeyboard.setAvailableRange(21 /*A0*/, 108 /*C8*/);
-        midiKeyboard.setOctaveForMiddleC(4);
+        mMidiKeyboard.setName("MIDI Keyboard");
+        mMidiKeyboard.setLowestVisibleKey(21 /*A0*/);
+        mMidiKeyboard.setAvailableRange(21 /*A0*/, 108 /*C8*/);
+        mMidiKeyboard.setOctaveForMiddleC(4);
 
-        addAndMakeVisible(midiKeyboard);
-        addAndMakeVisible(velocityLines);
+        addAndMakeVisible(mMidiKeyboard);
+        addAndMakeVisible(mVelocityLines);
     }
 
     void paint(juce::Graphics &g) override
@@ -33,15 +33,15 @@ public:
         int keyboardHeight = 60;
         int velocityHeight = getHeight() - keyboardHeight;
 
-        midiKeyboard.setBounds(0, getHeight() - keyboardHeight, getWidth(), keyboardHeight);
-        velocityLines.setBounds(0, getHeight() - keyboardHeight - velocityHeight, getWidth(), velocityHeight);
+        mMidiKeyboard.setBounds(0, getHeight() - keyboardHeight, getWidth(), keyboardHeight);
+        mVelocityLines.setBounds(0, getHeight() - keyboardHeight - velocityHeight, getWidth(), velocityHeight);
 
-        midiKeyboard.setKeyWidth(juce::jmax(10.0f, getWidth() / 52.0f /*noOfWhiteKeys*/));
+        mMidiKeyboard.setKeyWidth(juce::jmax(10.0f, getWidth() / 52.0f /*noOfWhiteKeys*/));
     }
 
 private:
-    juce::MidiKeyboardComponent midiKeyboard;
-    VelocityLines velocityLines;
+    juce::MidiKeyboardComponent mMidiKeyboard;
+    VelocityLines mVelocityLines;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Keyboard)
 };

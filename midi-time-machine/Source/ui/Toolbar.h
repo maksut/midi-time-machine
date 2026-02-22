@@ -13,13 +13,13 @@ class Toolbar : public juce::Component,
 {
 public:
     Toolbar(Processor &processor, Store &store, MidiPreview &midiPreview, MidiRoll &midiRoll)
-        : processor(processor), state(processor.getState()), store(store), midiPreview(midiPreview), midiRoll(midiRoll)
+        : mProcessor(processor), mState(processor.getState()), mStore(store), mMidiPreview(midiPreview), mMidiRoll(midiRoll)
     {
-        state.addListener(this);
+        mState.addListener(this);
 
-        playButton.setTooltip("Play the last saved midi file");
-        openButton.setTooltip("Open the directory of last saved midi file in system explorer");
-        settingsButton.setTooltip("In which there is plugin settings");
+        mPlayButton.setTooltip("Play the last saved midi file");
+        mOpenButton.setTooltip("Open the directory of last saved midi file in system explorer");
+        mSettingsButton.setTooltip("In which there is plugin settings");
 
         auto play = Resources::getIconDrawable(Icon::Play, juce::Colours::yellow, 0.1f);
         auto exportIcon = Resources::getIconDrawable(Icon::Export, juce::Colours::yellow, 0.1f);
@@ -27,7 +27,7 @@ public:
         auto open = Resources::getIconDrawable(Icon::Folder, juce::Colours::yellow, 0.1f);
         auto settings = Resources::getIconDrawable(Icon::Settings, juce::Colours::yellow, 0.1f);
 
-        playButton.setImages(
+        mPlayButton.setImages(
             play.get(), // normalImage
             nullptr,    // overImage
             nullptr,    // downImage
@@ -35,35 +35,35 @@ public:
             stop.get()  // normalImageOn
         );
 
-        openButton.setImages(open.get());
-        settingsButton.setImages(settings.get());
+        mOpenButton.setImages(open.get());
+        mSettingsButton.setImages(settings.get());
 
         reset();
 
-        playButton.addListener(this);
-        openButton.addListener(this);
-        settingsButton.addListener(this);
+        mPlayButton.addListener(this);
+        mOpenButton.addListener(this);
+        mSettingsButton.addListener(this);
 
-        addAndMakeVisible(playButton);
-        addAndMakeVisible(openButton);
-        addAndMakeVisible(settingsButton);
+        addAndMakeVisible(mPlayButton);
+        addAndMakeVisible(mOpenButton);
+        addAndMakeVisible(mSettingsButton);
         addAndMakeVisible(midiPreview);
     }
 
     ~Toolbar() override
     {
-        state.removeListener(this);
+        mState.removeListener(this);
     }
 
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
-        if (state.isSelectedMidiFileChange(tree, property))
+        if (mState.isSelectedMidiFileChange(tree, property))
             reset();
-        else if (state.isPlaybackTimeSecChange(tree, property))
+        else if (mState.isPlaybackTimeSecChange(tree, property))
         {
-            bool isPlaybackInProgress = state.getPlaybackTimeSec() >= 0;
+            bool isPlaybackInProgress = mState.getPlaybackTimeSec() >= 0;
 
-            playButton.setToggleState(isPlaybackInProgress, juce::dontSendNotification);
+            mPlayButton.setToggleState(isPlaybackInProgress, juce::dontSendNotification);
         }
     }
 
@@ -79,12 +79,12 @@ public:
         auto stretchSelf = juce::FlexItem::AlignSelf::stretch;
 
         fb.items = {
-            juce::FlexItem(playButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(mPlayButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
 
-            juce::FlexItem(midiPreview).withMargin(5).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(mMidiPreview).withMargin(5).withFlex(10.0f, 0.0f).withAlignSelf(stretchSelf),
 
-            juce::FlexItem(openButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
-            juce::FlexItem(settingsButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(mOpenButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
+            juce::FlexItem(mSettingsButton).withMargin(5).withFlex(1.0f, 0.0f).withAlignSelf(stretchSelf),
         };
 
         fb.performLayout(getLocalBounds());
@@ -92,11 +92,11 @@ public:
 
     void buttonClicked(juce::Button *button) override
     {
-        if (button == &playButton)
+        if (button == &mPlayButton)
         {
-            if (playButton.getToggleState())
+            if (mPlayButton.getToggleState())
             {
-                processor.stopPlayback();
+                mProcessor.stopPlayback();
             }
             else
             {
@@ -108,24 +108,24 @@ public:
                     juce::MidiFile midiFile;
 
                     if (midiFile.readFrom(fileStream))
-                        processor.startPlayback(midiFile);
+                        mProcessor.startPlayback(midiFile);
                 }
             }
         }
-        else if (button == &openButton)
+        else if (button == &mOpenButton)
         {
             onOpenClick();
         }
-        else if (button == &settingsButton)
+        else if (button == &mSettingsButton)
         {
-            state.toggleSettingsOpen();
+            mState.toggleSettingsOpen();
         }
     }
 
 private:
     std::optional<juce::File> getSelectedMidiFile()
     {
-        juce::File file(state.getSelectedMidiFile().trim());
+        juce::File file(mState.getSelectedMidiFile().trim());
 
         if (file.existsAsFile())
             return file;
@@ -135,7 +135,7 @@ private:
 
     std::optional<juce::File> getParentDirOfSelectedMidiFile()
     {
-        juce::File file(state.getSelectedMidiFile().trim());
+        juce::File file(mState.getSelectedMidiFile().trim());
 
         if (file.existsAsFile())
             return file.getParentDirectory();
@@ -154,8 +154,8 @@ private:
 
             if (midiFile.readFrom(fileStream))
             {
-                midiRoll.load(midiFile);
-                midiPreview.load(midiFile);
+                mMidiRoll.load(midiFile);
+                mMidiPreview.load(midiFile);
             }
             else
             {
@@ -163,17 +163,17 @@ private:
             }
         }
 
-        playButton.setEnabled(selectedFile.has_value());
+        mPlayButton.setEnabled(selectedFile.has_value());
     }
 
     void onOpenClick()
     {
         std::optional<juce::File> parentDir = getParentDirOfSelectedMidiFile();
-        juce::File currentDir = parentDir && parentDir->isDirectory() ? *parentDir : state.getRootDataDir();
+        juce::File currentDir = parentDir && parentDir->isDirectory() ? *parentDir : mState.getRootDataDir();
 
-        fileChooser.reset(new juce::FileChooser("Load a midi file...", currentDir, "*.mid", true));
+        mFileChooser.reset(new juce::FileChooser("Load a midi file...", currentDir, "*.mid", true));
 
-        fileChooser->launchAsync(
+        mFileChooser->launchAsync(
             juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
             [this](const juce::FileChooser &chooser)
             {
@@ -183,13 +183,13 @@ private:
                     return; // Nothing selected so nothing to do. This is not an error.
 
                 juce::File file = selectedFile.getLocalFile();
-                state.setSelectedMidiFile(file.getFullPathName());
+                mState.setSelectedMidiFile(file.getFullPathName());
             });
     }
 
     void showWarning(const juce::String &title, const juce::String &message)
     {
-        messageBox = juce::AlertWindow::showScopedAsync(
+        mMessageBox = juce::AlertWindow::showScopedAsync(
             juce::MessageBoxOptions()
                 .withIconType(juce::MessageBoxIconType::WarningIcon)
                 .withTitle(title)
@@ -199,18 +199,18 @@ private:
     }
 
 private:
-    juce::TooltipWindow tooltipWindow;
-    juce::DrawableButton playButton{"Play", juce::DrawableButton::ImageOnButtonBackground};
-    juce::DrawableButton openButton{"Open", juce::DrawableButton::ImageOnButtonBackground};
-    juce::DrawableButton settingsButton{"Settings", juce::DrawableButton::ImageOnButtonBackground};
-    std::unique_ptr<juce::FileChooser> fileChooser;
-    juce::ScopedMessageBox messageBox;
+    juce::TooltipWindow mTooltipWindow;
+    juce::DrawableButton mPlayButton{"Play", juce::DrawableButton::ImageOnButtonBackground};
+    juce::DrawableButton mOpenButton{"Open", juce::DrawableButton::ImageOnButtonBackground};
+    juce::DrawableButton mSettingsButton{"Settings", juce::DrawableButton::ImageOnButtonBackground};
+    std::unique_ptr<juce::FileChooser> mFileChooser;
+    juce::ScopedMessageBox mMessageBox;
 
-    Processor &processor;
-    State &state;
-    Store &store;
-    MidiPreview &midiPreview;
-    MidiRoll &midiRoll;
+    Processor &mProcessor;
+    State &mState;
+    Store &mStore;
+    MidiPreview &mMidiPreview;
+    MidiRoll &mMidiRoll;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Toolbar)
 };

@@ -14,55 +14,55 @@ class Content : public juce::Component,
                 public juce::Timer
 {
 public:
-    Content(State &state, Store &store, MidiRoll &midiRoll) : state(state), store(store), settings(state), keyboard(store), midiRoll(midiRoll)
+    Content(State &state, Store &store, MidiRoll &midiRoll) : mState(state), mStore(store), mMidiRoll(midiRoll), mSettings(state), mKeyboard(store)
     {
         state.addListener(this);
 
-        midiFileName.setFont(midiFileName.getFont().withHeight(18));
-        midiFileName.setAlpha(0.5);
+        mMidiFileName.setFont(mMidiFileName.getFont().withHeight(18));
+        mMidiFileName.setAlpha(0.5);
         resetMidiFileName();
 
         resetIsRecordingInProgress();
 
         addAndMakeVisible(midiRoll);
-        addAndMakeVisible(midiFileName);
+        addAndMakeVisible(mMidiFileName);
 
-        addAndMakeVisible(keyboard);
+        addAndMakeVisible(mKeyboard);
 
         // Adding settings last so it will be on front
-        addChildComponent(settings);
-        settings.setVisible(state.isSettinsOpen());
+        addChildComponent(mSettings);
+        mSettings.setVisible(state.isSettinsOpen());
     }
 
     ~Content() override
     {
-        state.removeListener(this);
+        mState.removeListener(this);
     }
 
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
-        if (state.isSelectedMidiFileChange(tree, property))
+        if (mState.isSelectedMidiFileChange(tree, property))
         {
             resetMidiFileName();
             resized();
             repaint();
         }
-        else if (state.isSettinsOpenChange(tree, property))
+        else if (mState.isSettinsOpenChange(tree, property))
         {
-            bool isOpen = state.isSettinsOpen();
+            bool isOpen = mState.isSettinsOpen();
 
             if (isOpen)
-                settings.reloadSettings();
+                mSettings.reloadSettings();
 
-            settings.setVisible(isOpen);
+            mSettings.setVisible(isOpen);
         }
-        else if (state.isPanelHeightRatioChange(tree, property))
+        else if (mState.isPanelHeightRatioChange(tree, property))
         {
-            panelHeigthRatio = state.getPanelHeightRatio();
+            mPanelHeigthRatio = mState.getPanelHeightRatio();
             resized();
             repaint();
         }
-        else if (state.isRecordingInProgressChange(tree, property))
+        else if (mState.isRecordingInProgressChange(tree, property))
         {
             resetIsRecordingInProgress();
             repaint();
@@ -71,7 +71,7 @@ public:
 
     void timerCallback() override
     {
-        displayRecordingDot = !displayRecordingDot;
+        mDisplayRecordingDot = !mDisplayRecordingDot;
         repaint();
     }
 
@@ -82,7 +82,7 @@ public:
         g.setColour(juce::Colours::white);
         g.setFont(juce::FontOptions(15.0f));
 
-        if (displayRecordingDot)
+        if (mDisplayRecordingDot)
         {
             g.setColour(juce::Colours::red);
 
@@ -105,29 +105,29 @@ public:
         topLeft.setX(bounds.getX() + bounds.getWidth() - topLeft.getWidth());
 
         if (topLeft.getWidth() < bounds.getWidth() && topLeft.getHeight() < bounds.getHeight())
-            settings.setBounds(topLeft);
+            mSettings.setBounds(topLeft);
         else
-            settings.setBounds(bounds);
+            mSettings.setBounds(bounds);
 
         // Filename
         juce::TextLayout layout;
         juce::AttributedString attributedString;
-        attributedString.append(midiFileName.getText(), midiFileName.getFont());
+        attributedString.append(mMidiFileName.getText(), mMidiFileName.getFont());
         layout.createLayout(attributedString, bounds.getWidth());
 
         int labelWidth = (int)layout.getWidth();
         int labelHeight = (int)layout.getHeight();
 
-        midiFileName.setBounds((bounds.getWidth() - labelWidth) / 2,
-                               4,
-                               labelWidth,
-                               labelHeight);
+        mMidiFileName.setBounds((bounds.getWidth() - labelWidth) / 2,
+                                4,
+                                labelWidth,
+                                labelHeight);
 
         // Midi preview
         int margin = 5;
         int panelWidth = bounds.getWidth() - (2 * margin);
 
-        int previewHeight = (bounds.getHeight() - 60) * panelHeigthRatio; // 60 keyboard size
+        int previewHeight = (bounds.getHeight() - 60) * mPanelHeigthRatio; // 60 keyboard size
 
         juce::Rectangle<int> previewBounds(
             margin,
@@ -135,7 +135,7 @@ public:
             panelWidth,
             previewHeight - (2 * margin));
 
-        midiRoll.setBounds(previewBounds);
+        mMidiRoll.setBounds(previewBounds);
 
         // Keyboard panel
         juce::Rectangle<int> keyboardBounds(
@@ -144,43 +144,43 @@ public:
             panelWidth,
             getHeight() - previewHeight - margin);
 
-        keyboard.setBounds(keyboardBounds);
+        mKeyboard.setBounds(keyboardBounds);
     }
 
 private:
     void resetMidiFileName()
     {
-        juce::File file(state.getSelectedMidiFile());
+        juce::File file(mState.getSelectedMidiFile());
         juce::String filename = file.existsAsFile() ? file.getFileNameWithoutExtension() : "";
 
-        midiFileName.setText(filename, juce::dontSendNotification);
+        mMidiFileName.setText(filename, juce::dontSendNotification);
     }
 
     void resetIsRecordingInProgress()
     {
-        if (state.isRecordingInProgress())
+        if (mState.isRecordingInProgress())
         {
             startTimer(RECORDING_BLINK_TIMER);
-            displayRecordingDot = true;
+            mDisplayRecordingDot = true;
         }
         else
         {
             stopTimer();
-            displayRecordingDot = false;
+            mDisplayRecordingDot = false;
         }
     }
 
 private:
-    State &state;
-    Store &store;
-    MidiRoll &midiRoll;
-    Settings settings;
-    Keyboard keyboard;
+    State &mState;
+    Store &mStore;
+    MidiRoll &mMidiRoll;
+    Settings mSettings;
+    Keyboard mKeyboard;
 
-    float panelHeigthRatio = 0.5;
-    bool displayRecordingDot = false;
+    float mPanelHeigthRatio = 0.5;
+    bool mDisplayRecordingDot = false;
 
-    juce::Label midiFileName{"MidiFileName", ""};
+    juce::Label mMidiFileName{"MidiFileName", ""};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Content)
 };

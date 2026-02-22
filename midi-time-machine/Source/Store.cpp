@@ -4,7 +4,7 @@
 
 const int POLL_TIME_MILLIS = 1000;
 
-Store::Store(Processor &processor) : processor(processor), state(processor.getState())
+Store::Store(Processor &processor) : mProcessor(processor), mState(processor.getState())
 {
     // Start the timer
     startTimer(POLL_TIME_MILLIS);
@@ -78,7 +78,7 @@ bool Store::saveMidiFile(
         return false;
 
     // File is saved. Update the selected midi file.
-    state.setSelectedMidiFile(targetFile.getFullPathName());
+    mState.setSelectedMidiFile(targetFile.getFullPathName());
 
     return true;
 }
@@ -101,9 +101,9 @@ bool Store::saveTpqMidiFile(int noOfNoteOns, int durationMs)
     tpqMidiSequence.addEvent(juce::MidiMessage::tempoMetaEvent(microsPerQuarterNote), 0);
     tpqMidiSequence.addEvent(juce::MidiMessage::timeSignatureMetaEvent(4, 4), 0);
 
-    for (int i = 0; i < midiSequence.getNumEvents(); ++i)
+    for (int i = 0; i < mMidiSequence.getNumEvents(); ++i)
     {
-        auto &message = midiSequence.getEventPointer(i)->message;
+        auto &message = mMidiSequence.getEventPointer(i)->message;
         auto timestampInMillis = message.getTimeStamp();
         auto ticks = timestampInMillis * ticksPerMilliSecond;
 
@@ -130,7 +130,7 @@ bool Store::saveSmpteMidiFile(int noOfNoteOns, int durationMs)
     // framesPerSecond=25 and subframeResolution=40 gives us 24*50=1000 millisecond resolution
     // So the message timestamps must be absolute times in millis.
     smpteMidiFile.setSmpteTimeFormat(25, 40);
-    smpteMidiFile.addTrack(midiSequence);
+    smpteMidiFile.addTrack(mMidiSequence);
 
     return saveMidiFile(smpteMidiFile, noOfNoteOns, durationMs, "_smpte");
 }
@@ -140,17 +140,17 @@ bool Store::prepareAndSaveLastMidi()
     // Before starting read every available midi message
     drainProcessorMidiQueue();
 
-    if (midiSequence.getNumEvents() == 0)
+    if (mMidiSequence.getNumEvents() == 0)
         return true; // Success. Nothing to do.
 
     // Update the Note ON & OFF pairs
-    midiSequence.updateMatchedPairs();
+    mMidiSequence.updateMatchedPairs();
 
     // Get number of note on messages. And calculate the duration.
-    int numNoteOns = recordingTracker.getNumberOfTotalNoteOns();
-    int durationMs = int(midiSequence.getEndTime() - midiSequence.getStartTime());
+    int numNoteOns = mRecordingTracker.getNumberOfTotalNoteOns();
+    int durationMs = int(mMidiSequence.getEndTime() - mMidiSequence.getStartTime());
 
-    if (numNoteOns < state.getMinNoOfNotes() || durationMs < state.getMinDurationMs())
+    if (numNoteOns < mState.getMinNoOfNotes() || durationMs < mState.getMinDurationMs())
     {
         // Message too small. Dropping it.
         reset();
@@ -159,11 +159,11 @@ bool Store::prepareAndSaveLastMidi()
     }
 
     // Timestamps are millisecond durations; since the Processor::processBlock started to run till the midi message arrived.
-    midiSequence.addTimeToMessages(state.getPredelayMs() - midiSequence.getStartTime());
+    mMidiSequence.addTimeToMessages(mState.getPredelayMs() - mMidiSequence.getStartTime());
 
     // Save the midi file
     bool filesSaved = false;
-    if (state.getMidiTimeFormat() == "TPQ")
+    if (mState.getMidiTimeFormat() == "TPQ")
         filesSaved = saveTpqMidiFile(numNoteOns, durationMs);
     else
         filesSaved = saveSmpteMidiFile(numNoteOns, durationMs);
@@ -226,14 +226,14 @@ juce::String Store::getDataString(const juce::MidiMessage &m)
 
 void Store::drainProcessorMidiQueue()
 {
-    std::vector<WrappedMessage> messages = processor.popMidiQueue();
+    std::vector<WrappedMessage> messages = mProcessor.popMidiQueue();
 
     if (messages.size() == 0)
         return;
 
-    state.setIsRecordingInProgress(true);
+    mState.setIsRecordingInProgress(true);
 
-    lastNoteReceivedTimeMs = juce::Time::currentTimeMillis();
+    mLastNoteReceivedTimeMs = juce::Time::currentTimeMillis();
 
     for (auto it = messages.begin(); it != messages.end(); ++it)
     {
@@ -241,33 +241,33 @@ void Store::drainProcessorMidiQueue()
 
         if (it->isPlayback)
         {
-            playbackTracker.track(message);
+            mPlaybackTracker.track(message);
         }
         else
         {
-            recordingTracker.track(message);
-            midiSequence.addEvent(message, 0);
+            mRecordingTracker.track(message);
+            mMidiSequence.addEvent(message, 0);
         }
 
         // Keyboard state is combined state of the playback and recording trackers
         if (message.isNoteOn())
-            keyboardState.noteOn(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
+            mKeyboardState.noteOn(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
         else if (message.isNoteOff())
-            keyboardState.noteOff(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
+            mKeyboardState.noteOff(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
     }
 }
 
 void Store::timerCallback()
 {
-    if (midiSequence.getNumEvents() == 0)
+    if (mMidiSequence.getNumEvents() == 0)
         return;
 
-    int minSilenceMs = state.getMinSilenceMs();
+    int minSilenceMs = mState.getMinSilenceMs();
 
-    if (recordingTracker.hasActiveNotes())
-        minSilenceMs *= state.getMinSilenceMultiplier();
+    if (mRecordingTracker.hasActiveNotes())
+        minSilenceMs *= mState.getMinSilenceMultiplier();
 
-    if ((juce::Time::currentTimeMillis() - lastNoteReceivedTimeMs) < minSilenceMs)
+    if ((juce::Time::currentTimeMillis() - mLastNoteReceivedTimeMs) < minSilenceMs)
         return;
 
     prepareAndSaveLastMidi();
@@ -275,7 +275,7 @@ void Store::timerCallback()
 
 juce::File Store::getRootDataDir()
 {
-    auto rootDir = juce::File(state.getRootDataDir());
+    auto rootDir = juce::File(mState.getRootDataDir());
 
     if (!rootDir.exists())
         rootDir.createDirectory();
@@ -285,29 +285,29 @@ juce::File Store::getRootDataDir()
 
 MessageTracker &Store::getRecordingTracker()
 {
-    return recordingTracker;
+    return mRecordingTracker;
 }
 
 MessageTracker &Store::getPlaybackTracker()
 {
-    return playbackTracker;
+    return mPlaybackTracker;
 }
 
 juce::MidiKeyboardState &Store::getKeyboardState()
 {
-    return keyboardState;
+    return mKeyboardState;
 }
 
 void Store::reset()
 {
-    midiSequence.clear();
+    mMidiSequence.clear();
 
-    recordingTracker.reset();
-    playbackTracker.reset();
+    mRecordingTracker.reset();
+    mPlaybackTracker.reset();
 
-    state.setIsRecordingInProgress(false);
+    mState.setIsRecordingInProgress(false);
 
     // Reset the keyboard state
-    keyboardState.allNotesOff(0);
-    keyboardState.reset();
+    mKeyboardState.allNotesOff(0);
+    mKeyboardState.reset();
 }

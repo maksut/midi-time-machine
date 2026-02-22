@@ -7,7 +7,7 @@ double Playback::play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, 
     if (!isReadyToPlay())
         return true; // The midi file is already played
 
-    int numTracks = midiFile.getNumTracks();
+    int numTracks = mMidiFile.getNumTracks();
     double bufferTimeSeconds = numOfSamplesInBuffer * millisPerSample / 1000.0f;
     bool allTracksPlayed = true;
 
@@ -18,12 +18,12 @@ double Playback::play(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer, 
     }
 
     // Move the playhead next buffer window
-    playheadTimeSeconds += bufferTimeSeconds;
+    mPlayheadTimeSeconds += bufferTimeSeconds;
 
     if (allTracksPlayed)
         reset(); // finished playing the midi file
 
-    return playheadTimeSeconds;
+    return mPlayheadTimeSeconds;
 }
 
 bool Playback::playOneTrack(
@@ -32,15 +32,15 @@ bool Playback::playOneTrack(
     int numOfSamplesInBuffer,
     double bufferTimeSeconds)
 {
-    auto sourceTrack = midiFile.getTrack(trackIndex);
+    auto sourceTrack = mMidiFile.getTrack(trackIndex);
     int numEvents = sourceTrack->getNumEvents();
-    auto &nextMessageIndex = nextMessageIndexes[trackIndex];
+    auto &nextMessageIndex = mNextMessageIndexes[trackIndex];
 
     while (nextMessageIndex < numEvents)
     {
         auto &message = sourceTrack->getEventPointer(nextMessageIndex)->message;
 
-        double messageTimeDiff = message.getTimeStamp() - playheadTimeSeconds;
+        double messageTimeDiff = message.getTimeStamp() - mPlayheadTimeSeconds;
         int messageSampleNumber = juce::roundToInt(messageTimeDiff / bufferTimeSeconds * numOfSamplesInBuffer);
 
         if (messageSampleNumber < numOfSamplesInBuffer)
@@ -56,7 +56,7 @@ bool Playback::playOneTrack(
             ++nextMessageIndex;
 
             // Keep track of current note ons and sustain
-            activeNotes.track(message);
+            mActiveNotes.track(message);
         }
         else
         {
@@ -70,42 +70,42 @@ bool Playback::playOneTrack(
 
 void Playback::start(const juce::MidiFile &sourceMidiFile, double startPlayheadPos)
 {
-    midiFile = juce::MidiFile(sourceMidiFile); // clones the midi file
+    mMidiFile = juce::MidiFile(sourceMidiFile); // clones the midi file
 
     // Make sure the timestamps of the events are in seconds
-    midiFile.convertTimestampTicksToSeconds();
+    mMidiFile.convertTimestampTicksToSeconds();
 
     double midiDurationSec = 0.0f;
 
     // Calculate duration and set the playhead time seconds
-    for (int trackIndex = 0; trackIndex < midiFile.getNumTracks(); ++trackIndex)
-        midiDurationSec = juce::jmax(midiDurationSec, midiFile.getTrack(trackIndex)->getEndTime());
+    for (int trackIndex = 0; trackIndex < mMidiFile.getNumTracks(); ++trackIndex)
+        midiDurationSec = juce::jmax(midiDurationSec, mMidiFile.getTrack(trackIndex)->getEndTime());
 
-    playheadTimeSeconds = midiDurationSec * startPlayheadPos;
+    mPlayheadTimeSeconds = midiDurationSec * startPlayheadPos;
 
     // Initialise nextMessage indexes by dropping messages before the playheadTimeSeconds
-    nextMessageIndexes = std::make_unique<int[]>(midiFile.getNumTracks());
+    mNextMessageIndexes = std::make_unique<int[]>(mMidiFile.getNumTracks());
 
-    for (int trackIndex = 0; trackIndex < midiFile.getNumTracks(); ++trackIndex)
+    for (int trackIndex = 0; trackIndex < mMidiFile.getNumTracks(); ++trackIndex)
     {
-        const juce::MidiMessageSequence *track = midiFile.getTrack(trackIndex);
+        const juce::MidiMessageSequence *track = mMidiFile.getTrack(trackIndex);
         int numEvents = track->getNumEvents();
 
         for (int messageIndex = 0; messageIndex < numEvents; ++messageIndex)
         {
             juce::MidiMessage &message = track->getEventPointer(messageIndex)->message;
 
-            if (message.getTimeStamp() >= playheadTimeSeconds)
+            if (message.getTimeStamp() >= mPlayheadTimeSeconds)
                 break;
             else
-                ++nextMessageIndexes[trackIndex];
+                ++mNextMessageIndexes[trackIndex];
         }
     }
 }
 
 void Playback::stop(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer)
 {
-    activeNotes.stopActiveNotes(midiMessages, numOfSamplesInBuffer);
+    mActiveNotes.stopActiveNotes(midiMessages, numOfSamplesInBuffer);
 
     reset();
 }
@@ -113,16 +113,16 @@ void Playback::stop(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer)
 void Playback::reset()
 {
     // Reset the indexes to zeros
-    std::fill_n(nextMessageIndexes.get(), midiFile.getNumTracks(), 0);
+    std::fill_n(mNextMessageIndexes.get(), mMidiFile.getNumTracks(), 0);
 
     // Mark the playheadTime as "DONE"
-    playheadTimeSeconds = -1;
+    mPlayheadTimeSeconds = -1;
 
     // Reset the note on and sustain state
-    activeNotes.reset();
+    mActiveNotes.reset();
 }
 
 bool Playback::isReadyToPlay()
 {
-    return playheadTimeSeconds != -1;
+    return mPlayheadTimeSeconds != -1;
 }

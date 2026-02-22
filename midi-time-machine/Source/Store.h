@@ -37,15 +37,15 @@ private:
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    Processor &processor;
-    State &state;
-    juce::MidiMessageSequence midiSequence;
+    Processor &mProcessor;
+    State &mState;
+    juce::MidiMessageSequence mMidiSequence;
 
-    juce::MidiKeyboardState keyboardState;
-    MessageTracker recordingTracker;
-    MessageTracker playbackTracker;
+    juce::MidiKeyboardState mKeyboardState;
+    MessageTracker mRecordingTracker;
+    MessageTracker mPlaybackTracker;
 
-    juce::int64 lastNoteReceivedTimeMs = std::numeric_limits<juce::int64>::max();
+    juce::int64 mLastNoteReceivedTimeMs = std::numeric_limits<juce::int64>::max();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Store)
 };

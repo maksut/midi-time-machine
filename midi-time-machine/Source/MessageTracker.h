@@ -15,34 +15,34 @@ public:
 
         if (message.isNoteOn())
         {
-            currentNoteOns[channel - 1][noteNumber] = message.getFloatVelocity();
-            ++numActiveNoteOns;
-            ++numTotalNoteOns;
+            mCurrentNoteOns[channel - 1][noteNumber] = message.getFloatVelocity();
+            ++mNumActiveNoteOns;
+            ++mNumTotalNoteOns;
         }
         else if (message.isNoteOff())
         {
-            currentNoteOns[channel - 1][noteNumber] = 0.0f;
-            --numActiveNoteOns;
+            mCurrentNoteOns[channel - 1][noteNumber] = 0.0f;
+            --mNumActiveNoteOns;
         }
         else if (message.isControllerOfType(64)) // is it a sustain event?
         {
-            currentSustain[channel - 1] = message.getControllerValue();
+            mCurrentSustain[channel - 1] = message.getControllerValue();
         }
     }
 
     int getNumberOfTotalNoteOns()
     {
-        return numTotalNoteOns;
+        return mNumTotalNoteOns;
     }
 
     bool hasActiveNotes()
     {
-        if (numActiveNoteOns > 0)
+        if (mNumActiveNoteOns > 0)
             return true;
 
         for (int channel = 1; channel <= 16; ++channel)
         {
-            if (currentSustain[channel - 1] > 0)
+            if (mCurrentSustain[channel - 1] > 0)
                 return true;
         }
 
@@ -54,7 +54,7 @@ public:
         if (channel < 1 || channel > 16 || noteNumber < 0 || noteNumber > 127)
             return 0.0f;
 
-        return currentNoteOns[channel - 1][noteNumber];
+        return mCurrentNoteOns[channel - 1][noteNumber];
     }
 
     void stopActiveNotes(juce::MidiBuffer &midiMessages, int numOfSamplesInBuffer)
@@ -66,12 +66,12 @@ public:
                 // Send a note off event for the current hanging "note on".
                 // With highest velocity.
                 // And with last sampleNumber for the buffer window.
-                if (currentNoteOns[channel - 1][noteNumber] > 0)
+                if (mCurrentNoteOns[channel - 1][noteNumber] > 0)
                     midiMessages.addEvent(juce::MidiMessage::noteOff(channel, noteNumber, 1.0f), numOfSamplesInBuffer - 1);
             }
 
             // Similary stop the sustain if active
-            if (currentSustain[channel - 1] > 0)
+            if (mCurrentSustain[channel - 1] > 0)
                 midiMessages.addEvent(juce::MidiMessage::controllerEvent(channel, 64, 0), numOfSamplesInBuffer - 1);
         }
 
@@ -84,14 +84,14 @@ public:
         {
             for (int noteNumber = 0; noteNumber < 128; ++noteNumber)
             {
-                currentNoteOns[channel - 1][noteNumber] = 0.0f;
+                mCurrentNoteOns[channel - 1][noteNumber] = 0.0f;
             }
 
-            currentSustain[channel - 1] = 0;
+            mCurrentSustain[channel - 1] = 0;
         }
 
-        numTotalNoteOns = 0;
-        numActiveNoteOns = 0;
+        mNumTotalNoteOns = 0;
+        mNumActiveNoteOns = 0;
     }
 
     float getNoteVelocity(int noteNumber) const
@@ -106,10 +106,10 @@ public:
 
 private:
     // To keep track of the active notes/sounds
-    float currentNoteOns[16][128] = {};
-    int currentSustain[16] = {};
-    int numTotalNoteOns = 0;
-    int numActiveNoteOns = 0;
+    float mCurrentNoteOns[16][128] = {};
+    int mCurrentSustain[16] = {};
+    int mNumTotalNoteOns = 0;
+    int mNumActiveNoteOns = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MessageTracker)
 };

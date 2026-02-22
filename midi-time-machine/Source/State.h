@@ -8,55 +8,55 @@ public:
     State()
     {
         // Set state properties
-        state.setProperty(selectedMidiFileId, "", nullptr);
-        state.setProperty(playbackTimeSecId, -1.0f, nullptr);
-        state.setProperty(recordinInProgressId, false, nullptr);
-        state.setProperty(settingsOpenId, false, nullptr);
-        state.setProperty(startMarkerPositionId, 0.0f, nullptr);
-        state.setProperty(playheadPositionId, 0.0f, nullptr);
+        mState.setProperty(sSelectedMidiFileId, "", nullptr);
+        mState.setProperty(sPlaybackTimeSecId, -1.0f, nullptr);
+        mState.setProperty(sRecordinInProgressId, false, nullptr);
+        mState.setProperty(sSettingsOpenId, false, nullptr);
+        mState.setProperty(sStartMarkerPositionId, 0.0f, nullptr);
+        mState.setProperty(sPlayheadPositionId, 0.0f, nullptr);
 
         auto homeDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory).getFullPathName();
-        state.setProperty(lastExportDirId, homeDir, nullptr);
+        mState.setProperty(sLastExportDirId, homeDir, nullptr);
 
         // Set setting properties
         resetSettings();
-        state.addChild(settings, -1, nullptr);
+        mState.addChild(mSettings, -1, nullptr);
     }
 
     void resetSettings()
     {
-        settings.setProperty(panelHeigthRatioId, 0.5, nullptr);
-        settings.setProperty(minSilenceId, 4000, nullptr);
-        settings.setProperty(minDurationId, 4000, nullptr);
-        settings.setProperty(minNoOfNotesId, 5, nullptr);
-        settings.setProperty(minSilenceMultiplierId, 5, nullptr);
-        settings.setProperty(predelayId, 1000, nullptr);
-        settings.setProperty(midiTimeFormatId, "TPQ", nullptr); // "TPQ" or "SMPTE" // Ticks Per Quarter note or absolute time
+        mSettings.setProperty(sPanelHeigthRatioId, 0.5, nullptr);
+        mSettings.setProperty(sMinSilenceId, 4000, nullptr);
+        mSettings.setProperty(sMinDurationId, 4000, nullptr);
+        mSettings.setProperty(sMinNoOfNotesId, 5, nullptr);
+        mSettings.setProperty(sMinSilenceMultiplierId, 5, nullptr);
+        mSettings.setProperty(sPredelayId, 1000, nullptr);
+        mSettings.setProperty(sMidiTimeFormatId, "TPQ", nullptr); // "TPQ" or "SMPTE" // Ticks Per Quarter note or absolute time
 
         juce::String defaultRootDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
                                           .getChildFile("midi_time_machine")
                                           .getFullPathName();
 
-        settings.setProperty(rootDataDirId, defaultRootDir, nullptr);
+        mSettings.setProperty(sRootDataDirId, defaultRootDir, nullptr);
     }
 
     std::unique_ptr<juce::XmlElement> toXml() const
     {
-        return state.createXml();
+        return mState.createXml();
     }
 
     void fromXml(std::unique_ptr<juce::XmlElement> &xmlState)
     {
         auto newState = juce::ValueTree::fromXml(*xmlState);
 
-        if (newState.isValid() && newState.hasType(stateId))
+        if (newState.isValid() && newState.hasType(sStateId))
         {
-            state.copyPropertiesAndChildrenFrom(newState, nullptr);
+            mState.copyPropertiesAndChildrenFrom(newState, nullptr);
 
-            if (auto s = state.getChildWithName(settingsId); s.isValid())
-                settings = s;
+            if (auto s = mState.getChildWithName(sSettingsId); s.isValid())
+                mSettings = s;
             else
-                state.addChild(settings, -1, nullptr);
+                mState.addChild(mSettings, -1, nullptr);
 
             // But we reset some of the state props
             setIsRecordingInProgress(false);
@@ -65,142 +65,142 @@ public:
 
     int getPredelayMs()
     {
-        return settings.getProperty(predelayId);
+        return mSettings.getProperty(sPredelayId);
     }
 
     void setPredelayMs(int preDelayMs)
     {
-        settings.setProperty(predelayId, preDelayMs, nullptr);
+        mSettings.setProperty(sPredelayId, preDelayMs, nullptr);
     }
 
     double getPanelHeightRatio()
     {
-        return settings.getProperty(panelHeigthRatioId);
+        return mSettings.getProperty(sPanelHeigthRatioId);
     }
 
     void setPanelHeigthRatio(double panelHeigthRatio)
     {
-        settings.setProperty(panelHeigthRatioId, panelHeigthRatio, nullptr);
+        mSettings.setProperty(sPanelHeigthRatioId, panelHeigthRatio, nullptr);
     }
 
     bool isPanelHeightRatioChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return settings == tree && property == panelHeigthRatioId;
+        return mSettings == tree && property == sPanelHeigthRatioId;
     }
 
     int getMinSilenceMs()
     {
-        return settings.getProperty(minSilenceId);
+        return mSettings.getProperty(sMinSilenceId);
     }
 
     void setMinSilenceMs(int minSilenceMs)
     {
-        settings.setProperty(minSilenceId, minSilenceMs, nullptr);
+        mSettings.setProperty(sMinSilenceId, minSilenceMs, nullptr);
     }
 
     int getMinDurationMs()
     {
-        return settings.getProperty(minDurationId);
+        return mSettings.getProperty(sMinDurationId);
     }
 
     void setMinDurationMs(int minDurationMs)
     {
-        settings.setProperty(minDurationId, minDurationMs, nullptr);
+        mSettings.setProperty(sMinDurationId, minDurationMs, nullptr);
     }
 
     int getMinNoOfNotes()
     {
-        return settings.getProperty(minNoOfNotesId);
+        return mSettings.getProperty(sMinNoOfNotesId);
     }
 
     void setMinNoOfNotes(int minNoOfNotes)
     {
-        settings.setProperty(minNoOfNotesId, minNoOfNotes, nullptr);
+        mSettings.setProperty(sMinNoOfNotesId, minNoOfNotes, nullptr);
     }
 
     int getMinSilenceMultiplier()
     {
-        return settings.getProperty(minSilenceMultiplierId);
+        return mSettings.getProperty(sMinSilenceMultiplierId);
     }
 
     void setMinSilenceMultiplier(int minSilenceMultiplier)
     {
-        settings.setProperty(minSilenceMultiplierId, minSilenceMultiplier, nullptr);
+        mSettings.setProperty(sMinSilenceMultiplierId, minSilenceMultiplier, nullptr);
     }
 
     juce::String getRootDataDir()
     {
-        return settings.getProperty(rootDataDirId);
+        return mSettings.getProperty(sRootDataDirId);
     }
 
     void setRootDataDir(const juce::String &rootDataDir)
     {
-        settings.setProperty(rootDataDirId, rootDataDir, nullptr);
+        mSettings.setProperty(sRootDataDirId, rootDataDir, nullptr);
     }
 
     juce::String getMidiTimeFormat()
     {
-        return settings.getProperty(midiTimeFormatId);
+        return mSettings.getProperty(sMidiTimeFormatId);
     }
 
     void setMidiTimeFormat(const juce::String &midiTimeFormat)
     {
-        settings.setProperty(midiTimeFormatId, midiTimeFormat, nullptr);
+        mSettings.setProperty(sMidiTimeFormatId, midiTimeFormat, nullptr);
     }
 
     juce::String getSelectedMidiFile()
     {
-        return state.getProperty(selectedMidiFileId);
+        return mState.getProperty(sSelectedMidiFileId);
     }
 
     void setSelectedMidiFile(const juce::String &midiFileName)
     {
-        state.setProperty(selectedMidiFileId, midiFileName, nullptr);
+        mState.setProperty(sSelectedMidiFileId, midiFileName, nullptr);
     }
 
     bool isSelectedMidiFileChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return state == tree && property == selectedMidiFileId;
+        return mState == tree && property == sSelectedMidiFileId;
     }
 
     double getPlaybackTimeSec()
     {
-        return state.getProperty(playbackTimeSecId);
+        return mState.getProperty(sPlaybackTimeSecId);
     }
 
     void setPlaybackTimeSec(double playbackTimeSec)
     {
-        state.setProperty(playbackTimeSecId, playbackTimeSec, nullptr);
+        mState.setProperty(sPlaybackTimeSecId, playbackTimeSec, nullptr);
     }
 
     bool isPlaybackTimeSecChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return state == tree && property == playbackTimeSecId;
+        return mState == tree && property == sPlaybackTimeSecId;
     }
 
     bool isRecordingInProgress()
     {
-        return state.getProperty(recordinInProgressId);
+        return mState.getProperty(sRecordinInProgressId);
     }
 
     void setIsRecordingInProgress(bool recordingInProgress)
     {
-        state.setProperty(recordinInProgressId, recordingInProgress, nullptr);
+        mState.setProperty(sRecordinInProgressId, recordingInProgress, nullptr);
     }
 
     bool isRecordingInProgressChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return state == tree && property == recordinInProgressId;
+        return mState == tree && property == sRecordinInProgressId;
     }
 
     bool isSettinsOpen()
     {
-        return state.getProperty(settingsOpenId);
+        return mState.getProperty(sSettingsOpenId);
     }
 
     void setSettinsOpen(bool isSettingsOpenId)
     {
-        state.setProperty(settingsOpenId, isSettingsOpenId, nullptr);
+        mState.setProperty(sSettingsOpenId, isSettingsOpenId, nullptr);
     }
 
     void toggleSettingsOpen()
@@ -210,75 +210,75 @@ public:
 
     bool isSettinsOpenChange(juce::ValueTree &tree, const juce::Identifier &property)
     {
-        return state == tree && property == settingsOpenId;
+        return mState == tree && property == sSettingsOpenId;
     }
 
     juce::String getLastExportDir()
     {
-        return state.getProperty(lastExportDirId);
+        return mState.getProperty(sLastExportDirId);
     }
 
     void setLastExportDir(const juce::String &lastExportDir)
     {
-        state.setProperty(lastExportDirId, lastExportDir, nullptr);
+        mState.setProperty(sLastExportDirId, lastExportDir, nullptr);
     }
 
     double getStartMarkerPosition()
     {
-        return state.getProperty(startMarkerPositionId);
+        return mState.getProperty(sStartMarkerPositionId);
     }
 
     void setStartMarkerPosition(double startMakerPosition)
     {
-        state.setProperty(startMarkerPositionId, startMakerPosition, nullptr);
+        mState.setProperty(sStartMarkerPositionId, startMakerPosition, nullptr);
     }
 
     double getPlayheadPosition()
     {
-        return state.getProperty(playheadPositionId);
+        return mState.getProperty(sPlayheadPositionId);
     }
 
     void setPlayheadPosition(double playheadPosition)
     {
-        state.setProperty(playheadPositionId, playheadPosition, nullptr);
+        mState.setProperty(sPlayheadPositionId, playheadPosition, nullptr);
     }
 
     void addListener(juce::ValueTree::Listener *listener)
     {
-        state.addListener(listener);
+        mState.addListener(listener);
     }
 
     void removeListener(juce::ValueTree::Listener *listener)
     {
-        state.removeListener(listener);
+        mState.removeListener(listener);
     }
 
 private:
-    juce::ValueTree state{stateId};
-    juce::ValueTree settings{settingsId};
+    juce::ValueTree mState{sStateId};
+    juce::ValueTree mSettings{sSettingsId};
 
     // Parent and root node properties
-    static inline const juce::Identifier stateId{"MIDI_TIME_MACHINE_STATE"};
-    static inline const juce::Identifier settingsId{"settings"};
+    static inline const juce::Identifier sStateId{"MIDI_TIME_MACHINE_STATE"};
+    static inline const juce::Identifier sSettingsId{"settings"};
 
     // State properties
-    static inline const juce::Identifier selectedMidiFileId{"selectedMidiFile"};
-    static inline const juce::Identifier playbackTimeSecId{"playbackTimeSec"};
-    static inline const juce::Identifier recordinInProgressId{"recordingInProgress"};
-    static inline const juce::Identifier settingsOpenId{"settingsOpen"};
-    static inline const juce::Identifier lastExportDirId{"lastExportDir"};
-    static inline const juce::Identifier startMarkerPositionId{"startMarkerPosition"};
-    static inline const juce::Identifier playheadPositionId{"playheadPosition"};
+    static inline const juce::Identifier sSelectedMidiFileId{"selectedMidiFile"};
+    static inline const juce::Identifier sPlaybackTimeSecId{"playbackTimeSec"};
+    static inline const juce::Identifier sRecordinInProgressId{"recordingInProgress"};
+    static inline const juce::Identifier sSettingsOpenId{"settingsOpen"};
+    static inline const juce::Identifier sLastExportDirId{"lastExportDir"};
+    static inline const juce::Identifier sStartMarkerPositionId{"startMarkerPosition"};
+    static inline const juce::Identifier sPlayheadPositionId{"playheadPosition"};
 
     // Settings properties - user visible
-    static inline const juce::Identifier panelHeigthRatioId{"panelHeightRatio"};
-    static inline const juce::Identifier minSilenceId{"minSilenceMs"};
-    static inline const juce::Identifier minDurationId{"minDurationMs"};
-    static inline const juce::Identifier minNoOfNotesId{"minNoOfNotes"};
-    static inline const juce::Identifier minSilenceMultiplierId{"minSilenceMultiplier"};
-    static inline const juce::Identifier predelayId{"predelayMs"};
-    static inline const juce::Identifier midiTimeFormatId{"midiTimeFormatId"};
-    static inline const juce::Identifier rootDataDirId{"rootDataDir"};
+    static inline const juce::Identifier sPanelHeigthRatioId{"panelHeightRatio"};
+    static inline const juce::Identifier sMinSilenceId{"minSilenceMs"};
+    static inline const juce::Identifier sMinDurationId{"minDurationMs"};
+    static inline const juce::Identifier sMinNoOfNotesId{"minNoOfNotes"};
+    static inline const juce::Identifier sMinSilenceMultiplierId{"minSilenceMultiplier"};
+    static inline const juce::Identifier sPredelayId{"predelayMs"};
+    static inline const juce::Identifier sMidiTimeFormatId{"midiTimeFormatId"};
+    static inline const juce::Identifier sRootDataDirId{"rootDataDir"};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(State)
 };

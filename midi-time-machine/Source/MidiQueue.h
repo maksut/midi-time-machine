@@ -19,7 +19,7 @@ public:
             .forEach(
                 [&](int dest)
                 {
-                    WrappedMessage &wrapedMessage = messages[(size_t)dest];
+                    WrappedMessage &wrapedMessage = mMessages[(size_t)dest];
                     wrapedMessage.message = message;
                     wrapedMessage.isPlayback = isPlayback;
                 });
@@ -30,7 +30,7 @@ public:
     {
         fifo.read(fifo.getNumReady())
             .forEach([&](int source)
-                     { *out++ = messages[(size_t)source]; });
+                     { *out++ = mMessages[(size_t)source]; });
     }
 
     int size()
@@ -39,9 +39,9 @@ public:
     }
 
 private:
-    static constexpr auto queueSize = 1 << 14;
-    juce::AbstractFifo fifo{queueSize};
-    std::vector<WrappedMessage> messages = std::vector<WrappedMessage>(queueSize);
+    static constexpr auto mQueueSize = 1 << 14;
+    juce::AbstractFifo fifo{mQueueSize};
+    std::vector<WrappedMessage> mMessages = std::vector<WrappedMessage>(mQueueSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiQueue)
 };

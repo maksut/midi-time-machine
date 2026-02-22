@@ -1,31 +1,30 @@
 #include "Editor.h"
 
-Editor::Editor(Processor &processor, Store &midiStore)
-    : AudioProcessorEditor(&processor),
-      processor(processor),
-      state(processor.getState()),
-      store(midiStore),
-      midiRoll(state, store, 5),
-      midiPreview(state, store, midiRoll),
-      toolbar(processor, store, midiPreview, midiRoll),
-      content(processor.getState(), store, midiRoll)
+Editor::Editor(Processor &inProcessor, Store &midiStore)
+    : AudioProcessorEditor(&inProcessor),
+      mState(inProcessor.getState()),
+      mStore(midiStore),
+      mMidiRoll(mState, mStore, 5),
+      mMidiPreview(mState, mStore, mMidiRoll),
+      mToolbar(inProcessor, mStore, mMidiPreview, mMidiRoll),
+      mContent(mState, mStore, mMidiRoll)
 {
-    openGLContext.attachTo(*this);
+    mOpenGLContext.attachTo(*this);
 
-    addAndMakeVisible(toolbar);
-    addAndMakeVisible(content);
+    addAndMakeVisible(mToolbar);
+    addAndMakeVisible(mContent);
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize(800, 400);
     setResizable(true, true);
 
-    state.addListener(this);
+    mState.addListener(this);
 }
 
 Editor::~Editor()
 {
-    state.removeListener(this);
+    mState.removeListener(this);
 }
 
 void Editor::paint(juce::Graphics &g)
@@ -46,13 +45,13 @@ void Editor::resized()
 
     grid.templateRows = {Track(Fr(1)), Track(Fr(5))};
     grid.templateColumns = {Track(Fr(1))};
-    grid.items = {juce::GridItem(toolbar), juce::GridItem(content)};
+    grid.items = {juce::GridItem(mToolbar), juce::GridItem(mContent)};
     grid.performLayout(getLocalBounds());
 }
 
 void Editor::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property)
 {
-    if (state.isSettinsOpenChange(tree, property))
+    if (mState.isSettinsOpenChange(tree, property))
     {
     }
 }

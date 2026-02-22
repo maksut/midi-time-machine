@@ -8,12 +8,12 @@ const int POLL_TIME_MILLIS = 1000 / 60; // ~ 60Hz
 
 Processor::Processor()
 {
-    state.reset(new State());
-    valueTreeLogger.reset(new ValueTreeLogger(*state));
-    store.reset(new Store(*this));
+    mState.reset(new State());
+    mValueTreeLogger.reset(new ValueTreeLogger(*mState));
+    mStore.reset(new Store(*this));
 
-    playbackRequest.reset(new Playback());
-    currentlyPlaying.reset(new Playback());
+    mPlaybackRequest.reset(new Playback());
+    mCurrentlyPlaying.reset(new Playback());
 
     // Processor is listening itself!. The change events are triggered in the audio thread.
     // But the listener callbacks are executed in the non-audio threads.
@@ -63,20 +63,20 @@ int Processor::getCurrentProgram()
     return 0;
 }
 
-void Processor::setCurrentProgram(int index)
+void Processor::setCurrentProgram(int /*index*/)
 {
 }
 
-const juce::String Processor::getProgramName(int index)
+const juce::String Processor::getProgramName(int /*index*/)
 {
     return {};
 }
 
-void Processor::changeProgramName(int index, const juce::String &newName)
+void Processor::changeProgramName(int /*index*/, const juce::String & /*newName*/)
 {
 }
 
-void Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void Processor::prepareToPlay(double /*sampleRate*/, int /*samplesPerBlock*/)
 {
     flushAndReset();
 }
@@ -93,8 +93,8 @@ void Processor::reset()
 
 void Processor::flushAndReset()
 {
-    store->prepareAndSaveLastMidi();
-    sampleCount = 0;
+    mStore->prepareAndSaveLastMidi();
+    mSampleCount = 0;
 }
 
 void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
@@ -121,29 +121,29 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
         double millisPerSample = 1000.0 / sampleRate;
 
         // Playback midi if available
-        juce::ScopedTryLock tryLock(playbackLock);
+        juce::ScopedTryLock tryLock(mPlaybackLock);
 
         if (tryLock.isLocked())
         {
-            if (playbackRequest->isReadyToPlay()) // Is there a new playback request?
+            if (mPlaybackRequest->isReadyToPlay()) // Is there a new playback request?
             {
                 // Mark the currentlyPlaying sequence as done
-                currentlyPlaying->stop(midiMessages, numOfSamples);
-                playbackTimeSec = -1;
+                mCurrentlyPlaying->stop(midiMessages, numOfSamples);
+                mPlaybackTimeSec = -1;
 
                 // Then swap the pointers
-                std::swap(currentlyPlaying, playbackRequest);
+                std::swap(mCurrentlyPlaying, mPlaybackRequest);
 
                 sendChangeMessage();
             }
         }
 
         // If there is a current playback ready then play it
-        if (currentlyPlaying->isReadyToPlay())
+        if (mCurrentlyPlaying->isReadyToPlay())
         {
-            playbackTimeSec = currentlyPlaying->play(midiMessages, numOfSamples, millisPerSample);
+            mPlaybackTimeSec = mCurrentlyPlaying->play(midiMessages, numOfSamples, millisPerSample);
 
-            if (playbackTimeSec.get() < 0.0f)
+            if (mPlaybackTimeSec.get() < 0.0f)
             {
                 // The playback is stopped. All midi messages are played.
                 sendChangeMessage();
@@ -167,11 +167,11 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
                 juce::MidiMessage message = metadata.getMessage();
                 double originalTimestamp = message.getTimeStamp();
 
-                message.setTimeStamp((sampleCount + metadata.samplePosition) * millisPerSample);
+                message.setTimeStamp((mSampleCount + metadata.samplePosition) * millisPerSample);
                 ++numMessages;
 
                 bool isPluginPlayback = numMessages > initialNumEvents;
-                queue.push(message, isHostPlaying() || isPluginPlayback);
+                mQueue.push(message, isHostPlaying() || isPluginPlayback);
 
                 // Not sure this is needed. It is an attempt to keep midi through intact.
                 message.setTimeStamp(originalTimestamp);
@@ -183,25 +183,25 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
     }
 
     // Finally update the sampleCount. Using it to keep track of time.
-    sampleCount += numOfSamples;
+    mSampleCount += numOfSamples;
 }
 
 void Processor::startPlayback(const juce::MidiFile &midiFile)
 {
-    juce::ScopedLock lock(playbackLock);
+    juce::ScopedLock lock(mPlaybackLock);
 
-    playbackRequest->start(midiFile, state->getStartMarkerPosition());
+    mPlaybackRequest->start(midiFile, mState->getStartMarkerPosition());
 }
 
 void Processor::stopPlayback()
 {
-    juce::ScopedLock lock(playbackLock);
+    juce::ScopedLock lock(mPlaybackLock);
 
     // Send a playback request with an empty file.
     // So the processor will do its usual swapping of currentlyPlaying & playbackRequest.
     // Slightly hacky but simplifies the state management of these requests.
     juce::MidiFile emptyMidiFile;
-    playbackRequest->start(emptyMidiFile, 0.0f);
+    mPlaybackRequest->start(emptyMidiFile, 0.0f);
 }
 
 bool Processor::hasEditor() const
@@ -211,27 +211,27 @@ bool Processor::hasEditor() const
 
 juce::AudioProcessorEditor *Processor::createEditor()
 {
-    return new Editor(*this, *store);
+    return new Editor(*this, *mStore);
 }
 
 void Processor::getStateInformation(juce::MemoryBlock &destData)
 {
-    if (auto xml = state->toXml())
+    if (auto xml = mState->toXml())
         copyXmlToBinary(*xml, destData);
 
     // Reset the state properties according the Processor state
-    state->setPlaybackTimeSec(playbackTimeSec.get());
+    mState->setPlaybackTimeSec(mPlaybackTimeSec.get());
 }
 
 void Processor::setStateInformation(const void *data, int sizeInBytes)
 {
     if (auto xmlState = getXmlFromBinary(data, sizeInBytes))
-        state->fromXml(xmlState);
+        mState->fromXml(xmlState);
 }
 
 void Processor::timerCallback()
 {
-    state->setPlaybackTimeSec(playbackTimeSec.get());
+    mState->setPlaybackTimeSec(mPlaybackTimeSec.get());
 }
 
 void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
@@ -239,10 +239,10 @@ void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
     if (source != this)
         return;
 
-    store->drainProcessorMidiQueue();
+    mStore->drainProcessorMidiQueue();
 
-    double playbackTime = playbackTimeSec.get();
-    state->setPlaybackTimeSec(playbackTime);
+    double playbackTime = mPlaybackTimeSec.get();
+    mState->setPlaybackTimeSec(playbackTime);
 
     // Only run the timer during playback to save tiny bit of processing
     if (playbackTime >= 0)
@@ -253,25 +253,25 @@ void Processor::changeListenerCallback(juce::ChangeBroadcaster *source)
 
 State &Processor::getState()
 {
-    return *state;
+    return *mState;
 }
 
 std::vector<WrappedMessage> Processor::popMidiQueue()
 {
     std::vector<WrappedMessage> messages;
 
-    queue.pop(std::back_inserter(messages));
+    mQueue.pop(std::back_inserter(messages));
 
     return messages;
 }
 
 bool Processor::isHostPlaying()
 {
-    if (auto *playHead = getPlayHead())
+    if (juce::AudioPlayHead *audioPlayHead = getPlayHead())
     {
         juce::AudioPlayHead::CurrentPositionInfo positionInfo;
 
-        if (auto position = playHead->getPosition())
+        if (auto position = audioPlayHead->getPosition())
             return position->getIsPlaying();
     }
 

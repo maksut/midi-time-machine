@@ -8,21 +8,21 @@
 class MidiRollBase : public RoundedComponent, public juce::ValueTree::Listener
 {
 public:
-    MidiRollBase(State &state, Store &store) : state(state), store(store)
+    MidiRollBase(State &state, Store &store) : mState(state), mStore(store)
     {
         state.addListener(this);
     }
 
     ~MidiRollBase() override
     {
-        state.removeListener(this);
+        mState.removeListener(this);
     }
 
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
-        if (state.isPlaybackTimeSecChange(tree, property))
+        if (mState.isPlaybackTimeSecChange(tree, property))
         {
-            playbackTimeSec = state.getPlaybackTimeSec();
+            mPlaybackTimeSec = mState.getPlaybackTimeSec();
             repaint();
         }
     }
@@ -31,20 +31,20 @@ public:
     {
         // Reset state
         unload();
-        midiFile.emplace(juce::MidiFile(midiFileArg)); // Get a clone of it
-        midiPath.emplace(juce::Path());
+        mMidiFile.emplace(juce::MidiFile(midiFileArg)); // Get a clone of it
+        mMidiPath.emplace(juce::Path());
 
         //
         // Copy the midiFile, update matched pairs and convert ticks to seconds
         // Also calculate note range for the file.
         //
 
-        noteRangeBegin = std::numeric_limits<int>().max();
-        noteRangeEnd = std::numeric_limits<int>().min();
+        mNoteRangeBegin = std::numeric_limits<int>().max();
+        mNoteRangeEnd = std::numeric_limits<int>().min();
 
-        for (int trackIndex = 0; trackIndex < midiFile->getNumTracks(); ++trackIndex)
+        for (int trackIndex = 0; trackIndex < mMidiFile->getNumTracks(); ++trackIndex)
         {
-            const juce::MidiMessageSequence *sequence = midiFile->getTrack(trackIndex);
+            const juce::MidiMessageSequence *sequence = mMidiFile->getTrack(trackIndex);
 
             for (int eventIndex = 0; eventIndex < sequence->getNumEvents(); ++eventIndex)
             {
@@ -53,40 +53,40 @@ public:
                 if (!message.isNoteOn())
                     continue;
 
-                noteRangeBegin = juce::jmin(noteRangeBegin, message.getNoteNumber());
-                noteRangeEnd = juce::jmax(noteRangeEnd, message.getNoteNumber());
+                mNoteRangeBegin = juce::jmin(mNoteRangeBegin, message.getNoteNumber());
+                mNoteRangeEnd = juce::jmax(mNoteRangeEnd, message.getNoteNumber());
             }
         }
 
-        midiFile->convertTimestampTicksToSeconds();
+        mMidiFile->convertTimestampTicksToSeconds();
 
         // Calculate duration
-        for (int trackIndex = 0; trackIndex < midiFile->getNumTracks(); ++trackIndex)
-            midiDurationSec = juce::jmax(midiDurationSec, midiFile->getTrack(trackIndex)->getEndTime());
+        for (int trackIndex = 0; trackIndex < mMidiFile->getNumTracks(); ++trackIndex)
+            mMidiDurationSec = juce::jmax(mMidiDurationSec, mMidiFile->getTrack(trackIndex)->getEndTime());
 
         // Draw it into the midiPath
-        for (int trackIndex = 0; trackIndex < midiFile->getNumTracks(); ++trackIndex)
-            drawTrack(*midiPath, midiFile->getTrack(trackIndex));
+        for (int trackIndex = 0; trackIndex < mMidiFile->getNumTracks(); ++trackIndex)
+            drawTrack(*mMidiPath, mMidiFile->getTrack(trackIndex));
 
         repaint();
     }
 
     void unload()
     {
-        midiFile.reset();
-        midiPath.reset();
-        noteRangeBegin = 0;
-        noteRangeEnd = 127;
-        midiDurationSec = 0.0f;
+        mMidiFile.reset();
+        mMidiPath.reset();
+        mNoteRangeBegin = 0;
+        mNoteRangeEnd = 127;
+        mMidiDurationSec = 0.0f;
         repaint();
-        playbackTimeSec = -1.0f;
+        mPlaybackTimeSec = -1.0f;
     }
 
 private:
     void drawTrack(juce::Path &midiPath, const juce::MidiMessageSequence *sequence)
     {
         double durationSec = sequence->getEndTime();
-        int noteRange = juce::jmax(noteRangeEnd - noteRangeBegin + 1, 40);
+        int noteRange = juce::jmax(mNoteRangeEnd - mNoteRangeBegin + 1, 40);
 
         float margin = 0.0f; // 1.0f / (noteRange + 4); // 2 line thickness margin
         float lineThickness = (1.0f - (2 * margin)) / noteRange;
@@ -107,13 +107,12 @@ private:
 
             double startTime = event->message.getTimeStamp();
             double endTime = noteOffEvent->message.getTimeStamp();
-            double noteDuration = endTime - startTime;
 
             float x1 = (lengthBySec * startTime) + margin;
             float x2 = (lengthBySec * endTime) + margin;
 
             // Index of the note inside the range. Cropping the bottom.
-            int noteIndex = event->message.getNoteNumber() - noteRangeBegin;
+            int noteIndex = event->message.getNoteNumber() - mNoteRangeBegin;
 
             // Flipping with (noteRange -) because 0,0 coord is top-right corner. Low notes needs to have higher y values.
             float y = (lineThickness * (noteRange - noteIndex)) + margin;
@@ -123,17 +122,17 @@ private:
     }
 
 protected:
-    Store &store;
-    State &state;
+    State &mState;
+    Store &mStore;
 
-    std::optional<juce::Path> midiPath;
-    double midiDurationSec = 0.0f;
-    double playbackTimeSec = -1.0f;
+    std::optional<juce::Path> mMidiPath;
+    double mMidiDurationSec = 0.0f;
+    double mPlaybackTimeSec = -1.0f;
 
 private:
-    std::optional<juce::MidiFile> midiFile;
-    int noteRangeBegin = 0;
-    int noteRangeEnd = 127;
+    std::optional<juce::MidiFile> mMidiFile;
+    int mNoteRangeBegin = 0;
+    int mNoteRangeEnd = 127;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiRollBase)
 };
@@ -141,9 +140,9 @@ private:
 class MidiRoll : public MidiRollBase
 {
 public:
-    MidiRoll(State &state, Store &store, int windowSizeSec) : MidiRollBase(state, store), windowSizeSec(windowSizeSec)
+    MidiRoll(State &state, Store &store, int windowSizeSec) : MidiRollBase(state, store), mWindowSizeSec(windowSizeSec)
     {
-        backgroundColour = juce::Colours::darkgrey;
+        mBackgroundColour = juce::Colours::darkgrey;
     }
 
     void paint(juce::Graphics &g) override
@@ -151,36 +150,36 @@ public:
         g.setColour(juce::Colours::white.withAlpha(0.2f));
         g.fillRect(getLocalBounds());
 
-        if (midiPath && windowSizeSec > 0)
+        if (mMidiPath && mWindowSizeSec > 0)
         {
             g.setColour(juce::Colours::black);
             juce::Rectangle<int> rect = getLocalBounds();
 
             // Draw a slice of the midi path
             g.saveState();
-            float visibleWidthPerSec = rect.getWidth() / windowSizeSec;
-            float width = visibleWidthPerSec * midiDurationSec;
+            float visibleWidthPerSec = rect.getWidth() / mWindowSizeSec;
+            float width = visibleWidthPerSec * mMidiDurationSec;
             float scroll = 0.0f;
 
-            if (startMarkerMoving || playbackTimeSec < 0)
-                scroll = width * startMarkerPos;
-            else if (playbackTimeSec > 0)
-                scroll = visibleWidthPerSec * playbackTimeSec;
+            if (mStartMarkerMoving || mPlaybackTimeSec < 0)
+                scroll = width * mStartMarkerPos;
+            else if (mPlaybackTimeSec > 0)
+                scroll = visibleWidthPerSec * mPlaybackTimeSec;
 
             if (scroll > 0.0f)
                 g.addTransform(juce::AffineTransform::translation(-1.0f * scroll, 0.0f));
 
             g.addTransform(juce::AffineTransform::scale(width, rect.getHeight()));
 
-            g.fillPath(*midiPath);
+            g.fillPath(*mMidiPath);
             g.restoreState();
 
             // Draw a playhead
-            if (startMarkerMoving && playbackTimeSec > 0)
+            if (mStartMarkerMoving && mPlaybackTimeSec > 0)
             {
                 g.setColour(juce::Colours::yellow.withAlpha(0.4f));
 
-                float x = (playbackTimeSec * visibleWidthPerSec) - scroll;
+                float x = (mPlaybackTimeSec * visibleWidthPerSec) - scroll;
                 float y = rect.getY();
 
                 g.drawLine(x, y, x, y + rect.getHeight(), 2.0f);
@@ -190,54 +189,54 @@ public:
 
     void setStartMarkerState(double startMarkerPos, bool startMarkerMoving)
     {
-        this->startMarkerPos = startMarkerPos;
-        this->startMarkerMoving = startMarkerMoving;
+        this->mStartMarkerPos = startMarkerPos;
+        this->mStartMarkerMoving = startMarkerMoving;
         repaint();
     }
 
     void mouseDown(const juce::MouseEvent &) override
     {
-        isDragging = false;
+        mIsDragging = false;
     }
 
     void mouseDrag(const juce::MouseEvent &e) override
     {
-        if (e.getDistanceFromDragStart() < 8 || isDragging)
+        if (e.getDistanceFromDragStart() < 8 || mIsDragging)
             return;
 
-        juce::File midiFile(state.getSelectedMidiFile().trim());
+        juce::File midiFile(mState.getSelectedMidiFile().trim());
 
         if (!midiFile.existsAsFile())
             return;
 
-        isDragging = true;
+        mIsDragging = true;
 
-        tempMidiFile.reset(new juce::TemporaryFile(".mid"));
+        mTempMidiFile.reset(new juce::TemporaryFile(".mid"));
 
-        if (!midiFile.copyFileTo(tempMidiFile->getFile()))
+        if (!midiFile.copyFileTo(mTempMidiFile->getFile()))
         {
-            tempMidiFile.reset();
+            mTempMidiFile.reset();
 
             return;
         }
 
         juce::StringArray filesToDrag;
-        filesToDrag.add(tempMidiFile->getFile().getFullPathName());
+        filesToDrag.add(mTempMidiFile->getFile().getFullPathName());
 
         juce::DragAndDropContainer::performExternalDragDropOfFiles(filesToDrag, true);
     }
 
     void mouseUp(const juce::MouseEvent &) override
     {
-        isDragging = false;
+        mIsDragging = false;
     }
 
 private:
-    std::unique_ptr<juce::TemporaryFile> tempMidiFile;
-    bool isDragging = false;
-    int windowSizeSec = -1.0f;
-    double startMarkerPos = 0.0f;
-    bool startMarkerMoving = false;
+    std::unique_ptr<juce::TemporaryFile> mTempMidiFile;
+    bool mIsDragging = false;
+    int mWindowSizeSec = -1.0f;
+    double mStartMarkerPos = 0.0f;
+    bool mStartMarkerMoving = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiRoll)
 };
@@ -266,7 +265,7 @@ public:
 
     void mouseDown(const juce::MouseEvent &e) override
     {
-        dragger.startDraggingComponent(this, e);
+        mDragger.startDraggingComponent(this, e);
 
         if (onChange)
             onChange(getX() + (getWidth() / 2), true);
@@ -274,13 +273,13 @@ public:
 
     void mouseDrag(const juce::MouseEvent &e) override
     {
-        dragger.dragComponent(this, e, &constraints);
+        mDragger.dragComponent(this, e, &mConstraints);
 
         if (onChange)
             onChange(getX() + (getWidth() / 2), true);
     }
 
-    void mouseUp(const juce::MouseEvent &e) override
+    void mouseUp(const juce::MouseEvent & /*e*/) override
     {
         if (onChange)
             onChange(getX() + (getWidth() / 2), false);
@@ -288,14 +287,14 @@ public:
 
     void resized() override
     {
-        constraints.setMinimumOnscreenAmounts(getHeight(), getWidth() / 2, getHeight(), getWidth() / 2);
+        mConstraints.setMinimumOnscreenAmounts(getHeight(), getWidth() / 2, getHeight(), getWidth() / 2);
     }
 
     std::function<void(int posX, bool isMoving)> onChange;
 
 private:
-    juce::ComponentDragger dragger;
-    juce::ComponentBoundsConstrainer constraints;
+    juce::ComponentDragger mDragger;
+    juce::ComponentBoundsConstrainer mConstraints;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StartMarker)
 };
@@ -306,11 +305,11 @@ private:
 class MidiPreview : public MidiRollBase
 {
 public:
-    MidiPreview(State &state, Store &store, MidiRoll &midiRoll) : MidiRollBase(state, store), midiRoll(midiRoll)
+    MidiPreview(State &state, Store &store, MidiRoll &midiRoll) : MidiRollBase(state, store), mMidiRoll(midiRoll)
     {
-        addAndMakeVisible(startMarker, 0);
+        addAndMakeVisible(mStartMarker, 0);
 
-        startMarker.onChange = [this](int x, bool isMoving)
+        mStartMarker.onChange = [this](int x, bool isMoving)
         { startMarkerMoved(x, isMoving); };
     }
 
@@ -319,7 +318,7 @@ public:
         MidiRollBase::load(midiFileArg);
 
         // Reset the start marker
-        state.setStartMarkerPosition(0.0f);
+        mState.setStartMarkerPosition(0.0f);
         resized();
     }
 
@@ -328,7 +327,7 @@ public:
         g.setColour(juce::Colours::white.withAlpha(0.2f));
         g.fillRect(getLocalBounds());
 
-        if (midiPath)
+        if (mMidiPath)
         {
             // Draw the midi path
             g.saveState();
@@ -336,15 +335,15 @@ public:
             juce::Rectangle<int> rect = getLocalBounds();
 
             g.addTransform(juce::AffineTransform::scale(rect.getWidth(), rect.getHeight()));
-            g.fillPath(*midiPath);
+            g.fillPath(*mMidiPath);
             g.restoreState();
 
             // Draw the play head
             g.setColour(juce::Colours::yellow.withAlpha(0.4f));
 
-            if (playbackTimeSec > 0)
+            if (mPlaybackTimeSec > 0)
             {
-                float x = (playbackTimeSec / midiDurationSec) * rect.getWidth();
+                float x = (mPlaybackTimeSec / mMidiDurationSec) * rect.getWidth();
                 float y = rect.getY();
                 g.drawLine(x, y, x, y + rect.getHeight(), 2.0f);
             }
@@ -353,27 +352,27 @@ public:
 
     void resized() override
     {
-        startMarker.setBounds(-8, 0, 16, getHeight());
+        mStartMarker.setBounds(-8, 0, 16, getHeight());
 
         // Reset start marker position from the state
-        double startMarkerPos = state.getStartMarkerPosition();
-        startMarker.setCentrePosition(startMarkerPos * getWidth(), getHeight() / 2);
+        double startMarkerPos = mState.getStartMarkerPosition();
+        mStartMarker.setCentrePosition(startMarkerPos * getWidth(), getHeight() / 2);
     }
 
     void mouseDown(const juce::MouseEvent &e) override
     {
-        startMarker.setCentrePosition(e.x, getHeight() / 2);
-        startMarker.mouseDown(e.getEventRelativeTo(&startMarker));
+        mStartMarker.setCentrePosition(e.x, getHeight() / 2);
+        mStartMarker.mouseDown(e.getEventRelativeTo(&mStartMarker));
     }
 
     void mouseUp(const juce::MouseEvent &e) override
     {
-        startMarker.mouseUp(e.getEventRelativeTo(&startMarker));
+        mStartMarker.mouseUp(e.getEventRelativeTo(&mStartMarker));
     }
 
     void mouseDrag(const juce::MouseEvent &e) override
     {
-        startMarker.mouseDrag(e.getEventRelativeTo(&startMarker));
+        mStartMarker.mouseDrag(e.getEventRelativeTo(&mStartMarker));
     }
 
 private:
@@ -381,13 +380,13 @@ private:
     {
         // Set start marker position of the state and the midi roll
         double startMarkerPos = (double)posX / getWidth();
-        state.setStartMarkerPosition(startMarkerPos);
-        midiRoll.setStartMarkerState(startMarkerPos, isMoving);
+        mState.setStartMarkerPosition(startMarkerPos);
+        mMidiRoll.setStartMarkerState(startMarkerPos, isMoving);
     }
 
 private:
-    StartMarker startMarker;
-    MidiRoll &midiRoll;
+    StartMarker mStartMarker;
+    MidiRoll &mMidiRoll;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiPreview)
 };

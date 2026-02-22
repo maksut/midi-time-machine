@@ -44,10 +44,10 @@ private:
     void reset();
 
 private:
-    juce::MidiFile midiFile;
-    double playheadTimeSeconds = -1;
-    std::unique_ptr<int[]> nextMessageIndexes = nullptr;
-    MessageTracker activeNotes;
+    juce::MidiFile mMidiFile;
+    double mPlayheadTimeSeconds = -1;
+    std::unique_ptr<int[]> mNextMessageIndexes = nullptr;
+    MessageTracker mActiveNotes;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Playback)
 };

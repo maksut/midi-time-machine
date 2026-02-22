@@ -106,7 +106,7 @@ const unsigned char *getPathData(Icon icon)
     throw std::runtime_error("Icon data not found");
 }
 
-const size_t getPathDataSize(Icon icon)
+size_t getPathDataSize(Icon icon)
 {
     switch (icon)
     {
