@@ -231,7 +231,7 @@ void Store::drainProcessorMidiQueue()
     if (messages.size() == 0)
         return;
 
-    mState.setIsRecordingInProgress(true);
+    bool recording = false;
 
     mLastNoteReceivedTimeMs = juce::Time::currentTimeMillis();
 
@@ -247,6 +247,7 @@ void Store::drainProcessorMidiQueue()
         {
             mRecordingTracker.track(message);
             mMidiSequence.addEvent(message, 0);
+            recording = true;
         }
 
         // Keyboard state is combined state of the playback and recording trackers
@@ -255,6 +256,9 @@ void Store::drainProcessorMidiQueue()
         else if (message.isNoteOff())
             mKeyboardState.noteOff(message.getChannel(), message.getNoteNumber(), message.getFloatVelocity());
     }
+
+    if (recording)
+        mState.setIsRecordingInProgress(true);
 }
 
 void Store::timerCallback()
