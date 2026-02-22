@@ -15,6 +15,8 @@
       <FILE id="lPXHwh" name="MidiRoll.h" compile="0" resource="0" file="Source/ui/MidiRoll.h"/>
       <FILE id="VRHjee" name="Resources.cpp" compile="1" resource="0" file="Source/ui/Resources.cpp"/>
       <FILE id="D8nOer" name="Resources.h" compile="0" resource="0" file="Source/ui/Resources.h"/>
+      <FILE id="xBY52o" name="RoundedComponent.h" compile="0" resource="0"
+            file="Source/ui/RoundedComponent.h"/>
       <FILE id="sOaC3H" name="Settings.h" compile="0" resource="0" file="Source/ui/Settings.h"/>
       <FILE id="ZUmH5u" name="Toolbar.h" compile="0" resource="0" file="Source/ui/Toolbar.h"/>
       <FILE id="svCVb3" name="VelocityLines.h" compile="0" resource="0" file="Source/ui/VelocityLines.h"/>

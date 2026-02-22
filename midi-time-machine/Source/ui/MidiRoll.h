@@ -3,8 +3,9 @@
 #include <JuceHeader.h>
 #include "../Store.h"
 #include "../State.h"
+#include "RoundedComponent.h"
 
-class MidiRollBase : public juce::Component, public juce::ValueTree::Listener
+class MidiRollBase : public RoundedComponent, public juce::ValueTree::Listener
 {
 public:
     MidiRollBase(State &state, Store &store) : state(state), store(store)
@@ -142,12 +143,13 @@ class MidiRoll : public MidiRollBase
 public:
     MidiRoll(State &state, Store &store, int windowSizeSec) : MidiRollBase(state, store), windowSizeSec(windowSizeSec)
     {
+        backgroundColour = juce::Colours::darkgrey;
     }
 
     void paint(juce::Graphics &g) override
     {
         g.setColour(juce::Colours::white.withAlpha(0.2f));
-        g.fillRoundedRectangle(getLocalBounds().toFloat(), 6.0f);
+        g.fillRect(getLocalBounds());
 
         if (midiPath && windowSizeSec > 0)
         {
@@ -285,7 +287,7 @@ public:
     void paint(juce::Graphics &g) override
     {
         g.setColour(juce::Colours::white.withAlpha(0.2f));
-        g.fillRoundedRectangle(getLocalBounds().toFloat(), 6.0f);
+        g.fillRect(getLocalBounds());
 
         if (midiPath)
         {

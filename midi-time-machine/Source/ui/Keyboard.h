@@ -2,14 +2,17 @@
 
 #include <JuceHeader.h>
 #include "VelocityLines.h"
+#include "RoundedComponent.h"
 
-class Keyboard : public juce::Component
+class Keyboard : public RoundedComponent
 {
 public:
     Keyboard(Store &store)
         : midiKeyboard(store.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard),
           velocityLines(store, midiKeyboard)
     {
+        backgroundColour = juce::Colours::darkgrey;
+
         midiKeyboard.setName("MIDI Keyboard");
         midiKeyboard.setLowestVisibleKey(21 /*A0*/);
         midiKeyboard.setAvailableRange(21 /*A0*/, 108 /*C8*/);
@@ -22,7 +25,7 @@ public:
     void paint(juce::Graphics &g) override
     {
         g.setColour(juce::Colours::white.withAlpha(0.2f));
-        g.fillRoundedRectangle(getLocalBounds().toFloat(), 6.0f);
+        g.fillRect(getLocalBounds());
     }
 
     void resized() override
