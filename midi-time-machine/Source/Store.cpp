@@ -233,8 +233,6 @@ void Store::drainProcessorMidiQueue()
 
     bool recording = false;
 
-    mLastNoteReceivedTimeMs = juce::Time::currentTimeMillis();
-
     for (auto it = messages.begin(); it != messages.end(); ++it)
     {
         juce::MidiMessage &message = it->message;
@@ -245,6 +243,7 @@ void Store::drainProcessorMidiQueue()
         }
         else
         {
+            mLastNoteReceivedTimeMs = juce::Time::currentTimeMillis();
             mRecordingTracker.track(message);
             mMidiSequence.addEvent(message, 0);
             recording = true;

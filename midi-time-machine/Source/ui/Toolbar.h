@@ -58,7 +58,13 @@ public:
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override
     {
         if (mState.isSelectedMidiFileChange(tree, property))
+        {
             reset();
+
+            // If a midi file is captued then stop any existing playback
+            if (mState.getPlaybackTimeSec() >= 0)
+                mProcessor.stopPlayback();
+        }
         else if (mState.isPlaybackTimeSecChange(tree, property))
         {
             bool isPlaybackInProgress = mState.getPlaybackTimeSec() >= 0;
