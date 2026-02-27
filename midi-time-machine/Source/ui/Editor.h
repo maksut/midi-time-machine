@@ -19,8 +19,6 @@ public:
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override;
 
 private:
-    juce::OpenGLContext mOpenGLContext;
-
     State &mState;
     Store &mStore;
     juce::TextButton mOpenDataFolderButton;

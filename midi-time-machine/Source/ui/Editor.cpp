@@ -9,8 +9,6 @@ Editor::Editor(Processor &inProcessor, Store &midiStore)
       mToolbar(inProcessor, mStore, mMidiPreview, mMidiRoll),
       mContent(mState, mStore, mMidiRoll)
 {
-    mOpenGLContext.attachTo(*this);
-
     addAndMakeVisible(mToolbar);
     addAndMakeVisible(mContent);
 
