@@ -86,9 +86,10 @@ private:
     void drawTrack(juce::Path &midiPath, const juce::MidiMessageSequence *sequence)
     {
         double durationSec = sequence->getEndTime();
-        int noteRange = juce::jmax(mNoteRangeEnd - mNoteRangeBegin + 1, 40);
+        int initialNoteRange = mNoteRangeEnd - mNoteRangeBegin + 1;
+        int noteRange = juce::jmax(initialNoteRange, 20); // if the key range is too narrow than make it 20 lines
 
-        float margin = 0.0f; // 1.0f / (noteRange + 4); // 2 line thickness margin
+        float margin = 1.0f / (noteRange + 4); // 2 line thickness margin
         float lineThickness = (1.0f - (2 * margin)) / noteRange;
 
         double lengthBySec = (1.0f - (2 * margin)) / durationSec;
@@ -115,7 +116,8 @@ private:
             int noteIndex = event->message.getNoteNumber() - mNoteRangeBegin;
 
             // Flipping with (noteRange -) because 0,0 coord is top-right corner. Low notes needs to have higher y values.
-            float y = (lineThickness * (noteRange - noteIndex)) + margin;
+            float pushToCenter = (noteRange - initialNoteRange) * lineThickness / 2.0f;
+            float y = (lineThickness * (noteRange - noteIndex)) + margin - pushToCenter;
 
             midiPath.addLineSegment(juce::Line<float>(x1, y, x2, y), lineThickness);
         }
