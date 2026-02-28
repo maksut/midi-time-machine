@@ -88,11 +88,11 @@ private:
         double durationSec = sequence->getEndTime();
         int initialNoteRange = mNoteRangeEnd - mNoteRangeBegin + 1;
         int noteRange = juce::jmax(initialNoteRange, 20); // if the key range is too narrow than make it 20 lines
+     
+        float horizontalMargin = 1.0f / (noteRange + 4); // 2 line thickness horizontal margin
+        float lineThickness = (1.0f - (2 * horizontalMargin)) / noteRange;
 
-        float margin = 1.0f / (noteRange + 4); // 2 line thickness margin
-        float lineThickness = (1.0f - (2 * margin)) / noteRange;
-
-        double lengthBySec = (1.0f - (2 * margin)) / durationSec;
+        double lengthBySec = 1.0f / durationSec;
 
         for (int i = 0; i < sequence->getNumEvents(); ++i)
         {
@@ -109,15 +109,15 @@ private:
             double startTime = event->message.getTimeStamp();
             double endTime = noteOffEvent->message.getTimeStamp();
 
-            float x1 = (lengthBySec * startTime) + margin;
-            float x2 = (lengthBySec * endTime) + margin;
+            float x1 = (lengthBySec * startTime);
+            float x2 = (lengthBySec * endTime);
 
             // Index of the note inside the range. Cropping the bottom.
             int noteIndex = event->message.getNoteNumber() - mNoteRangeBegin;
 
             // Flipping with (noteRange -) because 0,0 coord is top-right corner. Low notes needs to have higher y values.
             float pushToCenter = (noteRange - initialNoteRange) * lineThickness / 2.0f;
-            float y = (lineThickness * (noteRange - noteIndex)) + margin - pushToCenter;
+            float y = (lineThickness * (noteRange - noteIndex)) + horizontalMargin - pushToCenter;
 
             midiPath.addLineSegment(juce::Line<float>(x1, y, x2, y), lineThickness);
         }

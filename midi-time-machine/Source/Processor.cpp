@@ -170,7 +170,7 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
                 message.setTimeStamp((mSampleCount + metadata.samplePosition) * millisPerSample);
                 ++numMessages;
 
-                bool isPluginPlayback = numMessages >= initialNumEvents;
+                bool isPluginPlayback = numMessages > initialNumEvents;
                 mQueue.push(message, isHostPlaying() || isPluginPlayback);
 
                 // Not sure this is needed. It is an attempt to keep midi through intact.
