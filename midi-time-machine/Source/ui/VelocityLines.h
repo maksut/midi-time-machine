@@ -45,7 +45,7 @@ public:
                 float lineMaxHeight = (float)getHeight();
                 float lineHeight = velocity * lineMaxHeight;
 
-                g.setColour(juce::Colours::orange.withAlpha(0.8f));
+                g.setColour(juce::Colours::orange);
                 g.drawLine(pos.getX(), (float)getHeight(), pos.getX(), (float)getHeight() - lineHeight, lineWidth);
             }
         }
