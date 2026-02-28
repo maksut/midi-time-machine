@@ -99,32 +99,31 @@ public:
     void buttonClicked(juce::Button *button) override
     {
         if (button == &mPlayButton)
-        {
-            if (mPlayButton.getToggleState())
-            {
-                mProcessor.stopPlayback();
-            }
-            else
-            {
-                std::optional<juce::File> file = getSelectedMidiFile();
-
-                if (file)
-                {
-                    juce::FileInputStream fileStream(*file);
-                    juce::MidiFile midiFile;
-
-                    if (midiFile.readFrom(fileStream))
-                        mProcessor.startPlayback(midiFile);
-                }
-            }
-        }
+            togglePlay();
         else if (button == &mOpenButton)
-        {
             onOpenClick();
-        }
         else if (button == &mSettingsButton)
-        {
             mState.toggleSettingsOpen();
+    }
+
+    void togglePlay()
+    {
+        if (mPlayButton.getToggleState())
+        {
+            mProcessor.stopPlayback();
+        }
+        else
+        {
+            std::optional<juce::File> file = getSelectedMidiFile();
+
+            if (file)
+            {
+                juce::FileInputStream fileStream(*file);
+                juce::MidiFile midiFile;
+
+                if (midiFile.readFrom(fileStream))
+                    mProcessor.startPlayback(midiFile);
+            }
         }
     }
 

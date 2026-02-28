@@ -17,12 +17,13 @@ Editor::Editor(Processor &inProcessor, Store &midiStore)
     setSize(800, 400);
     setResizable(true, true);
 
-    mState.addListener(this);
+    // We want to capture keyboard events
+    addKeyListener(this);
 }
 
 Editor::~Editor()
 {
-    mState.removeListener(this);
+    removeKeyListener(this);
 }
 
 void Editor::paint(juce::Graphics &g)
@@ -47,9 +48,28 @@ void Editor::resized()
     grid.performLayout(getLocalBounds());
 }
 
-void Editor::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property)
+bool Editor::keyPressed(const juce::KeyPress &key, juce::Component *)
 {
-    if (mState.isSettinsOpenChange(tree, property))
+    // Regardless of originatingComponent we capture the play shortcuts
+    if (key == juce::KeyPress(juce::KeyPress::playKey) || key == juce::KeyPress(juce::KeyPress::spaceKey) || key == 'p')
     {
+        mToolbar.togglePlay();
+
+        return true;
     }
+
+    return false;
+}
+
+void Editor::addToDesktop(int windowStyleFlags, void *nativeWindowToAttachTo)
+{
+    juce::AudioProcessorEditor::addToDesktop(windowStyleFlags, nativeWindowToAttachTo);
+
+    //
+    // Attempting to grab keyboard focus when standalone app is started.
+    // This does not work in KDE. Might work in other DEs or OSes.
+    //
+
+    if (auto *peer = getPeer())
+        peer->grabFocus();
 }

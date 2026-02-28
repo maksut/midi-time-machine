@@ -88,7 +88,7 @@ private:
         double durationSec = sequence->getEndTime();
         int initialNoteRange = mNoteRangeEnd - mNoteRangeBegin + 1;
         int noteRange = juce::jmax(initialNoteRange, 20); // if the key range is too narrow than make it 20 lines
-     
+
         float horizontalMargin = 1.0f / (noteRange + 4); // 2 line thickness horizontal margin
         float lineThickness = (1.0f - (2 * horizontalMargin)) / noteRange;
 
@@ -320,7 +320,7 @@ public:
         MidiRollBase::load(midiFileArg);
 
         // Reset the start marker
-        mState.setStartMarkerPosition(0.0f);
+        startMarkerMoved(0.0f, false);
         resized();
     }
 
@@ -381,7 +381,8 @@ private:
     void startMarkerMoved(int posX, bool isMoving)
     {
         // Set start marker position of the state and the midi roll
-        double startMarkerPos = (double)posX / getWidth();
+        int width = getWidth();
+        double startMarkerPos = width <= 0 ? 0 : ((double)posX / getWidth());
         mState.setStartMarkerPosition(startMarkerPos);
         mMidiRoll.setStartMarkerState(startMarkerPos, isMoving);
     }

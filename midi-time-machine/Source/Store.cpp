@@ -31,13 +31,8 @@ bool Store::saveMidiFile(
     juce::String day(now.getWeekdayName(false));
 
     juce::String hours(now.getHours());
-    hours.paddedLeft('0', 2);
-
     juce::String mins(now.getMinutes());
-    mins.paddedLeft('0', 2);
-
     juce::String secs(now.getSeconds());
-    secs.paddedLeft('0', 2);
 
     juce::String seconds;
     seconds << juce::String(juce::roundToInt(durationMs / 1000));
@@ -48,7 +43,7 @@ bool Store::saveMidiFile(
     juce::MemoryOutputStream filename;
     filename
         << dateAndDay << " "
-        << hours << "-" << mins << "-" << secs << " "
+        << hours.paddedLeft('0', 2) << "-" << mins.paddedLeft('0', 2) << "-" << secs.paddedLeft('0', 2) << " "
         << juce::String(noOfNoteOns) << " notes " << seconds << " seconds"
         << filenamePostfix << juce::String(".mid");
 

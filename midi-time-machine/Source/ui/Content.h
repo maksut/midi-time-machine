@@ -75,22 +75,25 @@ public:
         repaint();
     }
 
-    void paint(juce::Graphics &g) override
+    void paintOverChildren(juce::Graphics &g) override
     {
-        g.fillAll(juce::Colours::darkgrey);
-
-        g.setColour(juce::Colours::white);
-        g.setFont(juce::FontOptions(15.0f));
-
         if (mDisplayRecordingDot)
         {
-            g.setColour(juce::Colours::red);
+            g.setColour(juce::Colours::red.withAlpha(0.6f));
 
             juce::Rectangle<int> bounds = getLocalBounds();
             float size = bounds.getWidth() / 40.0f;
             juce::Rectangle<float> rect(size, size, size, size);
             g.fillEllipse(rect);
         }
+    }
+
+    void paint(juce::Graphics &g) override
+    {
+        g.fillAll(juce::Colours::darkgrey);
+
+        g.setColour(juce::Colours::white);
+        g.setFont(juce::FontOptions(15.0f));
     }
 
     void resized() override
