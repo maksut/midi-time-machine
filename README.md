@@ -20,3 +20,7 @@ The standalone application works the same way, but requires you to route your MI
 ## Why?
 
 There are too many things to pay attention when playing piano. Listening back to a fresh take is the fastest way to catch things your fingers didn't notice - whether notes are truly legato or detached, or whether the voicing of a chord is balanced the way you intended. The velocity display makes dynamics visible at a glance.
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
