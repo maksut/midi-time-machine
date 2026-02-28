@@ -1,2 +1,6 @@
 Builds
 midi-time-machine/JuceLibraryCode
+AudioPluginHost
+DemoRunner
+plugin-host.filtergraph
+Projucer
