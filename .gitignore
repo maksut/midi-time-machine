@@ -1,6 +1,7 @@
-Builds
-midi-time-machine/JuceLibraryCode
+midi-time-machine/Builds/LinuxMakefile/build
+midi-time-machine/Builds/LinuxMakefile/pre_build
 AudioPluginHost
 DemoRunner
 plugin-host.filtergraph
 Projucer
+.vst3
