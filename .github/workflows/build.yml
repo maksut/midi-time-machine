@@ -9,12 +9,17 @@ jobs:
     container: debian:11
 
     steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '4.2.x'
+
     - name: Install Dependencies
       run: |
         apt-get update
         apt-get install -y \
           git \
-          cmake build-essential \
+          build-essential \
           libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev \
           libgl1-mesa-dev \
           libfreetype6-dev libfontconfig1-dev \
@@ -36,7 +41,9 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: linux-build
-        path: ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
+        path: |
+          ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
+          !${{runner.temp}}/**/*.a
 
   macos-build:
     runs-on: ${{ matrix.os }}
@@ -45,8 +52,13 @@ jobs:
         os: [macos-15-intel, macos-latest]
 
     steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '4.2.x'
+
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -60,12 +72,19 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: macos-${{ matrix.os }}-build
-        path: ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
+        path: |
+          ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
+          !${{runner.temp}}/**/*.a
 
   windows-build:
     runs-on: windows-latest
 
     steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '4.2.x'
+
     - name: Checkout Repository
       uses: actions/checkout@v6
       with:
@@ -81,4 +100,6 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: windows-build
-        path: ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
+        path: |
+          ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
+          !${{runner.temp}}/**/*.lib
