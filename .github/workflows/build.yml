@@ -1,5 +1,5 @@
 
-name: Midi Time Machine Build
+name: MIDI Time Machine
 
 on: [push, pull_request, workflow_dispatch]
 
@@ -32,18 +32,18 @@ jobs:
         submodules: recursive
 
     - name: Configure CMake
-      run: cmake -B ${{runner.temp}}/build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
-      run: cmake --build ${{runner.temp}}/build -j
+      run: cmake --build build -j
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6
       with:
         name: linux-build
         path: |
-          ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
-          !${{runner.temp}}/**/*.a
+          build/midi-time-machine/midi-time-machine_artefacts/Release
+          !build/**/*.a
 
   macos-build:
     runs-on: ${{ matrix.os }}
@@ -63,18 +63,18 @@ jobs:
         submodules: recursive
 
     - name: Configure CMake
-      run: cmake -B ${{runner.temp}}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=11.7
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=11.7
 
     - name: Build
-      run: cmake --build ${{runner.temp}}/build -j
+      run: cmake --build build -j
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6
       with:
-        name: macos-${{ matrix.os }}-build
+        name: ${{ matrix.os }}-build
         path: |
-          ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
-          !${{runner.temp}}/**/*.a
+          build/midi-time-machine/midi-time-machine_artefacts/Release
+          !build/**/*.a
 
   windows-build:
     runs-on: windows-latest
@@ -91,15 +91,15 @@ jobs:
         submodules: recursive
 
     - name: Configure CMake
-      run: cmake -B ${{runner.temp}}/build -A x64
+      run: cmake -B build -A x64
 
     - name: Build
-      run: cmake --build ${{runner.temp}}/build --config Release -j
+      run: cmake --build build --config Release -j
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6
       with:
         name: windows-build
         path: |
-          ${{runner.temp}}/build/midi-time-machine/midi-time-machine_artefacts/Release
-          !${{runner.temp}}/**/*.lib
+          build/midi-time-machine/midi-time-machine_artefacts/Release
+          !build/**/*.lib
