@@ -1,7 +1,12 @@
 
 name: MIDI Time Machine
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   linux-build:
@@ -104,3 +109,41 @@ jobs:
           build/midi-time-machine/midi-time-machine_artefacts/Release
           !build/**/*.lib
           !build/**/*.exp
+
+  release:
+    needs: [linux-build, macos-build, windows-build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: tmp_assets
+
+      - name: Package and Rename Assets
+        run: |
+          TAG=${{ github.ref_name }}
+          mkdir dist
+
+          # Linux: .tar.xz
+          cd tmp_assets/linux-build && tar -cJf ../../dist/midi-time-machine_linux-x64-$TAG.tar.xz . && cd ../..
+
+          # MacOS Intel: .zip
+          cd tmp_assets/macos-15-intel-build && zip -r ../../dist/midi-time-machine_macos-intel-$TAG.zip . && cd ../..
+
+          # MacOS ARM (from macos-latest): .zip
+          cd tmp_assets/macos-latest-build && zip -r ../../dist/midi-time-machine_macos-arm-$TAG.zip . && cd ../..
+
+          # Windows: .zip
+          cd tmp_assets/windows-build && zip -r ../../dist/midi-time-machine_windows-x64-$TAG.zip . && cd ../..
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: true
+          prerelease: true
