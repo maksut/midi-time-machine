@@ -103,3 +103,4 @@ jobs:
         path: |
           build/midi-time-machine/midi-time-machine_artefacts/Release
           !build/**/*.lib
+          !build/**/*.exp
