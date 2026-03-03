@@ -1,0 +1,149 @@
+
+name: MIDI Time Machine
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux-build:
+    runs-on: ubuntu-latest
+    container: debian:11
+
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '4.2.x'
+
+    - name: Install Dependencies
+      run: |
+        apt-get update
+        apt-get install -y \
+          git \
+          build-essential \
+          libx11-dev libxext-dev libxrandr-dev libxinerama-dev libxcursor-dev \
+          libgl1-mesa-dev \
+          libfreetype6-dev libfontconfig1-dev \
+          libasound2-dev libjack-jackd2-dev libpulse-dev \
+          libgtk-3-dev libwebkit2gtk-4.0-dev
+
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build -j
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v6
+      with:
+        name: linux-build
+        path: |
+          build/midi-time-machine/midi-time-machine_artefacts/Release
+          !build/**/*.a
+
+  macos-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-15-intel, macos-latest]
+
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '4.2.x'
+
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=11.7
+
+    - name: Build
+      run: cmake --build build -j
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ matrix.os }}-build
+        path: |
+          build/midi-time-machine/midi-time-machine_artefacts/Release
+          !build/**/*.a
+
+  windows-build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '4.2.x'
+
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Configure CMake
+      run: cmake -B build -A x64
+
+    - name: Build
+      run: cmake --build build --config Release -j
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v6
+      with:
+        name: windows-build
+        path: |
+          build/midi-time-machine/midi-time-machine_artefacts/Release
+          !build/**/*.lib
+          !build/**/*.exp
+
+  release:
+    needs: [linux-build, macos-build, windows-build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: tmp_assets
+
+      - name: Package and Rename Assets
+        run: |
+          TAG=${{ github.ref_name }}
+          mkdir dist
+
+          # Linux: .tar.xz
+          cd tmp_assets/linux-build && tar -cJf ../../dist/midi-time-machine_linux-x64-$TAG.tar.xz . && cd ../..
+
+          # MacOS Intel: .zip
+          cd tmp_assets/macos-15-intel-build && zip -r ../../dist/midi-time-machine_macos-intel-$TAG.zip . && cd ../..
+
+          # MacOS ARM (from macos-latest): .zip
+          cd tmp_assets/macos-latest-build && zip -r ../../dist/midi-time-machine_macos-arm-$TAG.zip . && cd ../..
+
+          # Windows: .zip
+          cd tmp_assets/windows-build && zip -r ../../dist/midi-time-machine_windows-x64-$TAG.zip . && cd ../..
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: true
+          prerelease: true
