@@ -17,6 +17,7 @@ juce_add_plugin(midi-time-machine
 
 target_sources(midi-time-machine
     PRIVATE
+        Source/Main.cpp
         Source/MessageTracker.h
         Source/MidiQueue.h
         Source/Playback.cpp
@@ -42,6 +43,7 @@ target_sources(midi-time-machine
 
 target_compile_definitions(midi-time-machine
     PUBLIC
+        JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1
         JUCE_STRICT_REFCOUNTEDPOINTER=1
         JUCE_VST3_CAN_REPLACE_VST2=0
         # So <JuceHeader.h> does not have "using namespace juce"
