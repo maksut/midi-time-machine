@@ -46,6 +46,7 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: linux-build
+        retention-days: 7
         path: |
           build/midi-time-machine/midi-time-machine_artefacts/Release
           !build/**/*.a
@@ -77,6 +78,7 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: ${{ matrix.os }}-build
+        retention-days: 7
         path: |
           build/midi-time-machine/midi-time-machine_artefacts/Release
           !build/**/*.a
@@ -105,6 +107,7 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: windows-build
+        retention-days: 7
         path: |
           build/midi-time-machine/midi-time-machine_artefacts/Release
           !build/**/*.lib

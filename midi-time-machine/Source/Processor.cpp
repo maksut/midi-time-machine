@@ -1,8 +1,8 @@
 #include "Processor.h"
-#include "ui/Editor.h"
-#include "Store.h"
 #include "Playback.h"
+#include "Store.h"
 #include "ValueTreeLogger.h"
+#include "ui/Editor.h"
 
 const int POLL_TIME_MILLIS = 1000 / 60; // ~ 60Hz
 
@@ -116,7 +116,7 @@ void Processor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer 
 
     double sampleRate = getSampleRate();
 
-    if (sampleRate != 0)
+    if (sampleRate > 0)
     {
         double millisPerSample = 1000.0 / sampleRate;
 

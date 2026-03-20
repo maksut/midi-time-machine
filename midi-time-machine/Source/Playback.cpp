@@ -34,7 +34,7 @@ bool Playback::playOneTrack(
 {
     auto sourceTrack = mMidiFile.getTrack(trackIndex);
     int numEvents = sourceTrack->getNumEvents();
-    auto &nextMessageIndex = mNextMessageIndexes[trackIndex];
+    auto &nextMessageIndex = mNextMessageIndexes[static_cast<size_t>(trackIndex)];
 
     while (nextMessageIndex < numEvents)
     {
@@ -84,7 +84,7 @@ void Playback::start(const juce::MidiFile &sourceMidiFile, double startPlayheadP
     mPlayheadTimeSeconds = midiDurationSec * startPlayheadPos;
 
     // Initialise nextMessage indexes by dropping messages before the playheadTimeSeconds
-    mNextMessageIndexes = std::make_unique<int[]>(mMidiFile.getNumTracks());
+    mNextMessageIndexes = std::make_unique<int[]>(static_cast<size_t>(mMidiFile.getNumTracks()));
 
     for (int trackIndex = 0; trackIndex < mMidiFile.getNumTracks(); ++trackIndex)
     {
@@ -98,7 +98,7 @@ void Playback::start(const juce::MidiFile &sourceMidiFile, double startPlayheadP
             if (message.getTimeStamp() >= mPlayheadTimeSeconds)
                 break;
             else
-                ++mNextMessageIndexes[trackIndex];
+                ++mNextMessageIndexes[static_cast<size_t>(trackIndex)];
         }
     }
 }
@@ -124,5 +124,5 @@ void Playback::reset()
 
 bool Playback::isReadyToPlay()
 {
-    return mPlayheadTimeSeconds != -1;
+    return mPlayheadTimeSeconds >= 0;
 }

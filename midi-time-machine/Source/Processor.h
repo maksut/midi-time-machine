@@ -1,7 +1,7 @@
 #pragma once
 
-#include <JuceHeader.h>
 #include "MidiQueue.h"
+#include <JuceHeader.h>
 
 class State;
 class Store;
@@ -10,7 +10,7 @@ class ValueTreeLogger;
 
 class Processor : public juce::AudioProcessor, public juce::ChangeBroadcaster, public juce::ChangeListener, public juce::Timer
 {
-public:
+  public:
     Processor();
     ~Processor() override;
 
@@ -18,6 +18,12 @@ public:
     void releaseResources() override;
     void reset() override;
     void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
+
+    // To suppress -Woverloaded-virtual
+    void processBlock(juce::AudioBuffer<double> &, juce::MidiBuffer &) override
+    {
+        jassertfalse;
+    }
 
     juce::AudioProcessorEditor *createEditor() override;
     bool hasEditor() const override;
@@ -48,7 +54,7 @@ public:
 
     State &getState();
 
-private:
+  private:
     void flushAndReset();
     bool isHostPlaying();
 

@@ -74,6 +74,10 @@ target_link_libraries(midi-time-machine
         juce::juce_recommended_warning_flags
 )
 
+# So LinkTimeOptimisation uses all available cores
+target_compile_options(midi-time-machine PRIVATE -flto=auto)
+target_link_options(midi-time-machine PRIVATE -flto=auto)
+
 # Generates <JuceHeader.h>
 juce_generate_juce_header(midi-time-machine)
 target_include_directories(midi-time-machine PUBLIC Source)

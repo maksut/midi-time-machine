@@ -5,3 +5,6 @@ plugin-host.filtergraph
 Projucer
 midi-time-machine.jucer
 .vst3
+.idea
+.cache
+compile_commands.json
